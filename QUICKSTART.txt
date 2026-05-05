@@ -1,0 +1,83 @@
+📰 HƯỚNG DẪN NHANH - KÊNH14 SCRAPER
+====================================
+
+✅ CÁC FILE ĐÃ SẴN SÀNG:
+  ✓ server.js           - Backend scraper
+  ✓ package.json        - Dependencies
+  ✓ public/index.html   - Frontend
+  ✓ README.md           - Tài liệu đầy đủ
+  ✓ node_modules/       - Libraries (đã cài)
+
+📋 CÁCH SỬ DỤNG:
+
+1️⃣ KHỞI ĐỘNG SERVER
+   $ npm start
+   
+   (hoặc sử dụng nodemon để auto-reload:)
+   $ npm run dev
+
+2️⃣ MỞ TRÌNH DUYỆT
+   http://localhost:3000
+
+3️⃣ NHẬP URL TỪ KENH14.VN
+   Ví dụ:
+   https://kenh14.vn/dau-ai-ngo-o-met-gala-lisa-blackpink-dung-mat-ban-trai-tin-don-chi-6-giay-tuong-tac-thoi-da-du-gay-chu-y-215260505102013763.chn
+
+4️⃣ NHẤN "LẤY NỘI DUNG" HOẶC ENTER
+
+5️⃣ SAO CHÉP NGOÀI NỘI DUNG VỚI "COPY TEXT"
+
+---
+
+🔧 THAY ĐỔI PORT (nếu port 3000 đã sử dụng)
+
+Mở file server.js, tìm dòng:
+  const PORT = 3000;
+
+Thay thành port khác, ví dụ:
+  const PORT = 8080;
+
+---
+
+⚡ VỚI NODEMON (auto-reload khi thay đổi code):
+
+1. Cài đặt nodemon (nếu chưa):
+   $ npm install --save-dev nodemon
+
+2. Chạy:
+   $ npm run dev
+
+   Bây giờ server sẽ tự động restart khi code thay đổi!
+
+---
+
+❓ TROUBLESHOOTING
+
+❌ Error: "Cannot find module 'express'"
+   → Chạy: npm install
+
+❌ Port 3000 đã được sử dụng
+   → Thay đổi PORT trong server.js
+   → Hoặc tắt process khác đang dùng port
+
+❌ Không kết nối được
+   → Kiểm tra server đang chạy không
+   → Thử http://localhost:3000 trên trình duyệt
+
+---
+
+🎯 TÍNH NĂNG CHÍNH
+
+✅ Lấy tiêu đề & toàn bộ nội dung
+✅ Đếm ký tự & từ tự động
+✅ Copy 1 click vào clipboard
+✅ Giao diện hiện đại & responsive
+✅ Xử lý lỗi chi tiết
+
+---
+
+📞 SUPPORT
+
+Kiểm tra console browser (F12) hoặc terminal để xem chi tiết lỗi
+
+Happy scraping! 🚀
