@@ -1,22 +1,24 @@
-// const express = require('express');
-// const axios = require('axios');
-// const cheerio = require('cheerio');
-// const path = require('path');
-// const cors = require('cors');
+const express = require('express');
+const axios = require('axios');
+const cheerio = require('cheerio');
+const path = require('path');
+const cors = require('cors');
+const dotenv = require('dotenv');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-import cors from 'cors';
-import cheerio from 'cheerio';
-import path from 'path';
-import express from 'express';
-import axios from 'axios'; // Nếu bạn vẫn dùng axios ở chỗ khác
-import dotenv from 'dotenv';
+// import cors from 'cors';
+// import cheerio from 'cheerio';
+// import path from 'path';
+// import express from 'express';
+// import axios from 'axios'; // Nếu bạn vẫn dùng axios ở chỗ khác
+// import dotenv from 'dotenv';
 
 dotenv.config();
 
 const app = express();
 const PORT = 3000;
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+// import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Khởi tạo với API Key
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -216,9 +218,9 @@ app.post('/api/summarize', async (req, res) => {
         
         let errorMsg = 'Lỗi khi tóm tắt với Gemini';
         
-        if (error.response?.status === 400) {
+        if (error.response.status === 400) {
             errorMsg = 'API Key không hợp lệ. Vui lòng cấu hình GEMINI_API_KEY';
-        } else if (error.response?.status === 429) {
+        } else if (error.response.status === 429) {
             errorMsg = 'Quá nhiều requests. Vui lòng thử lại sau';
         } else if (error.message.includes('timeout')) {
             errorMsg = 'Gemini timeout. Vui lòng thử lại';
