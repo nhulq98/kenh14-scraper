@@ -185,17 +185,25 @@ app.post('/api/summarize', async (req, res) => {
         console.log(`Summarizing with Gemini...`);
 
         // Tạo prompt theo yêu cầu
-        const prompt = `Persona: Bạn là một Biên tập viên tin tức dày dặn kinh nghiệm, chuyên sáng tạo nội dung "tin nhanh" xu hướng trên mạng xã hội. Phong cách viết: Sắc sảo, gãy gọn, giàu thông tin và đúng văn phong báo chí hiện đại.
-            Task: Tóm tắt bài báo được cung cấp thành 3 đoạn nội dung (Mở - Thân - Kết).
-            Yêu cầu kỹ thuật:
-            Định dạng: Mỗi đoạn đúng 3 dòng. Không dùng tiêu đề "Mở/Thân/Kết".
-            Văn phong: Sử dụng ngôn ngữ báo chí, loại bỏ từ ngữ thừa. Tập trung làm nổi bật thông điệp của tiêu đề.
-            Kiểm duyệt: Tự động thay thế các từ nhạy cảm (vi phạm chính sách TikTok) bằng từ đồng nghĩa hoặc cách nói giảm nói tránh (Ví dụ: thay "giết" bằng "tiễn", "lừa đảo" bằng "chiêu trò gian lận", "máu" bằng "vết đỏ",...).
-            Cấu trúc chi tiết:
-            Đoạn 1: Trực diện, nêu bật sự kiện nóng nhất hoặc con số gây sốc nhất.
-            Đoạn 2: Đưa ra 2-3 chi tiết đắt giá nhất từ nội dung bài báo để làm rõ vấn đề.
-            Đoạn 3: Đưa ra góc nhìn tổng kết, lời cảnh báo hoặc dự báo diễn biến tiếp theo để tạo sự trọn vẹn (không kết cụt).
-            Nội dung bài báo cần tóm tắt:
+        const prompt = `Role: Bạn là một Biên tập viên tin tức dày dặn kinh nghiệm, chuyên sáng tạo nội dung "tin nhanh" xu hướng trên mạng xã hội. Phong cách viết: Sắc sảo, gãy gọn, giàu thông tin và đúng văn phong báo chí hiện đại.
+            Task: Tóm tắt bài báo được cung cấp bên dưới thành đúng 3 đoạn nội dung (Mở - Thân - Kết).
+            YÊU CẦU KỸ THUẬT BẮT BUỘC:
+            1. Định dạng cấu trúc: 
+            - Chỉ xuất ra đúng 3 đoạn văn. KHÔNG thêm tiêu đề "Mở/Thân/Kết", KHÔNG thêm lời mở đầu hay lời kết của AI (ví dụ: Không ghi "Đây là tóm tắt của bạn...").
+            - MỘT ĐOẠN PHẢI CÓ ĐÚNG 3 CÂU (ngắt bằng dấu chấm). Không viết 1 câu, không viết 2 câu, bắt buộc phải là 3 câu/đoạn. Mỗi câu trung bình từ 15-20 từ.
+
+            2. Văn phong & Biên tập:
+            - Sử dụng ngôn ngữ báo chí hiện đại, giật tít ngầm, loại bỏ hoàn toàn từ thừa. Tập trung làm nổi bật thông điệp chính của tiêu đề.
+
+            3. Bộ lọc kiểm duyệt (Tránh vi phạm chính sách TikTok):
+            - Tự động quét và thay thế tất cả các từ nhạy cảm bằng từ đồng nghĩa hoặc nói giảm nói tránh. Ví dụ: "giết/sát hại" -> "tiễn/lấy đi mạng sống", "lừa đảo/chiếm đoạt" -> "chiêu trò gian lận/vây bẫy tài chính", "máu" -> "vết đỏ", "bắt giam/tội phạm" -> "vướng vòng lao lý/đối tượng".
+
+            CẤU TRÚC CHI TIẾT TỪNG ĐOẠN:
+            - Đoạn 1 (3 câu): Trực diện, nêu bật sự kiện nóng nhất hoặc con số gây sốc nhất ngay câu đầu tiên.
+            - Đoạn 2 (3 câu): Đưa ra 2-3 chi tiết đắt giá nhất từ nội dung bài báo để làm rõ bản chất vấn đề.
+            - Đoạn 3 (3 câu): Đưa ra góc nhìn tổng kết, lời cảnh báo hoặc dự báo diễn biến tiếp theo để tạo sự trọn vẹn (không kết cụt).
+
+            NỘI DUNG BÀI BÁO CẦN TÓM TẮT:
             ${content}`;
         try {
             const result = await model.generateContent(prompt);
