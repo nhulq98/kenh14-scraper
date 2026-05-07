@@ -210,9 +210,6 @@ app.post('/api/summarize', async (req, res) => {
             const response = await result.response;
             const text = response.text();
             console.log(text);
-
-            // Extract response
-            // const summary = response.data.candidates?.[0]?.content?.parts?.[0]?.text || 'Không thể tóm tắt';
     
             res.json({ 
                 success: true, 
