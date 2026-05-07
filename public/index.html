@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kênh14 Scraper + Gemini AI</title>
+    <title>Kênh14 & Saostar Scraper + Gemini AI</title>
     <style>
         * {
             margin: 0;
@@ -361,7 +361,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📰 Kênh14 Scraper + 🤖 Gemini AI</h1>
+            <h1>📰 Kênh14 & Saostar Scraper + 🤖 Gemini AI</h1>
             <p>Lấy nội dung bài viết và tóm tắt tự động bằng AI</p>
         </div>
 
@@ -373,7 +373,7 @@
                     <input 
                         type="url" 
                         id="urlInput" 
-                        placeholder="https://kenh14.vn/..."
+                        placeholder="https://kenh14.vn/... hoặc https://saostar.vn/..."
                         value=""
                     >
                     <div class="button-group">
@@ -387,7 +387,7 @@
                     <div id="inputStatus" class="status"></div>
                     <div class="info-box">
                         <strong>💡 Hướng dẫn:</strong>
-                        Dán URL từ kenh14.vn, nhấn "Lấy Nội Dung", sau đó dùng Gemini để tóm tắt!
+                        Dán URL từ kenh14.vn hoặc saostar.vn, nhấn "Lấy Nội Dung", sau đó dùng Gemini để tóm tắt!
                     </div>
                 </div>
             </div>
@@ -496,8 +496,8 @@
                 return;
             }
 
-            if (!url.includes('kenh14.vn')) {
-                showStatus(inputStatus, 'error', '❌ URL phải từ kenh14.vn');
+            if (!url.includes('kenh14.vn') && !url.includes('saostar.vn')) {
+                showStatus(inputStatus, 'error', '❌ URL phải từ kenh14.vn hoặc saostar.vn');
                 return;
             }
 

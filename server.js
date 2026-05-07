@@ -106,10 +106,10 @@ app.post('/api/scrape', async (req, res) => {
             });
         }
 
-        if (!url.includes('kenh14.vn')) {
+        if (!(url.includes('kenh14.vn') || url.includes('saostar.vn'))) {
             return res.status(400).json({ 
                 success: false, 
-                error: 'URL phải từ kenh14.vn' 
+                error: 'URL phải từ kenh14.vn hoặc saostar.vn' 
             });
         }
 
@@ -136,15 +136,25 @@ app.post('/api/scrape', async (req, res) => {
         
         // Try multiple selectors
         title = $('h1.fck_title').text().trim() ||
+                $('article h1').first().text().trim() ||
                 $('h1').first().text().trim() ||
                 $('meta[property="og:title"]').attr('content') ||
                 '';
 
         // Extract content
         let content = '';
-        
-        // Try primary selector
-        let contentDiv = $('.fck_detail').first();
+
+        // Prefer saostar article body when available
+        if (url.includes('saostar.vn')) {
+            const articleBody = $('article').first();
+            if (articleBody.length) {
+                content = articleBody.text().trim();
+            }
+        }
+
+        // Try primary selector only if no content yet
+        if (!content) {
+            let contentDiv = $('.fck_detail').first();
         
         if (!contentDiv.length) {
             contentDiv = $('.article-content').first();
@@ -178,6 +188,7 @@ app.post('/api/scrape', async (req, res) => {
                 // Fallback: get all text
                 content = contentDiv.text().trim();
             }
+        }
         }
 
         // Combine and clean
