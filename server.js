@@ -18,10 +18,30 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
-// import { GoogleGenerativeAI } from "@google/generative-ai";
+// Danh sách API keys
+const apiKeys = [
+    process.env.GEMINI_API_KEY,
+    process.env.GEMINI_API_KEY1,
+    process.env.GEMINI_API_KEY2,
+    process.env.GEMINI_API_KEY3
+].filter(key => key); // Lọc bỏ các key undefined
 
-// Khởi tạo với API Key
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+let currentKeyIndex = 0;
+
+// Hàm để lấy API key hiện tại
+function getCurrentApiKey() {
+    console.log(`🔑 Using API key ${currentKeyIndex + 1}/${apiKeys.length}`);
+    return apiKeys[currentKeyIndex];
+}
+
+// Hàm để chuyển sang API key tiếp theo
+function switchToNextApiKey() {
+    currentKeyIndex = (currentKeyIndex + 1) % apiKeys.length;
+    console.log(`🔄 Switched to API key ${currentKeyIndex + 1}/${apiKeys.length} due to rate limit`);
+}
+
+// Khởi tạo với API Key đầu tiên
+const genAI = new GoogleGenerativeAI(getCurrentApiKey());
 
 // Cấu hình model
 const model = genAI.getGenerativeModel(
@@ -170,6 +190,56 @@ app.post('/api/scrape', async (req, res) => {
     }
 });
 
+// Hàm để thử gọi API với retry và switch key
+async function generateSummaryWithRetry(prompt, maxRetries = apiKeys.length) {
+    let attempts = 0;
+    let lastError = null;
+
+    console.log(`🚀 Starting Gemini API call with ${apiKeys.length} available keys (max retries: ${maxRetries})`);
+
+    while (attempts < maxRetries) {
+        try {
+            // Cập nhật model với API key hiện tại
+            const currentGenAI = new GoogleGenerativeAI(getCurrentApiKey());
+            const currentModel = currentGenAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+
+            const result = await currentModel.generateContent(prompt);
+            const response = await result.response;
+            const text = response.text();
+            console.log(`✅ Successfully generated summary using API key ${currentKeyIndex + 1}`);
+            return text;
+        } catch (error) {
+            lastError = error;
+            console.error(`❌ Attempt ${attempts + 1}/${maxRetries} failed with API key ${currentKeyIndex + 1}:`, error.message);
+
+            // Check for rate limit/quota errors (429 status or quota exceeded messages)
+            const isRateLimitError = 
+                (error.response && error.response.status === 429) || 
+                error.message.includes('429') || 
+                error.message.includes('Too Many Requests') || 
+                error.message.includes('Quota exceeded') ||
+                error.message.includes('quota');
+
+            if (isRateLimitError) {
+                // Rate limit/quota hit, switch to next key
+                switchToNextApiKey();
+                attempts++;
+                console.log(`⏳ Retrying with next API key... (${attempts}/${maxRetries})`);
+                // Wait a bit before retrying (optional, but good practice)
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            } else {
+                // Other error, don't retry
+                console.error(`💥 Non-retryable error encountered, stopping attempts`);
+                throw error;
+            }
+        }
+    }
+
+    // If all retries failed
+    console.error(`🚫 All ${maxRetries} attempts failed. Last error:`, lastError.message);
+    throw lastError;
+}
+
 // Gemini Summarize endpoint
 app.post('/api/summarize', async (req, res) => {
     try {
@@ -205,28 +275,31 @@ app.post('/api/summarize', async (req, res) => {
 
             NỘI DUNG BÀI BÁO CẦN TÓM TẮT:
             ${content}`;
-        try {
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text();
-            console.log(text);
-    
-            res.json({ 
-                success: true, 
-                summary: text
-            });
-        } catch (error) {
-            console.error('Chi tiết lỗi 400:', error);
-        }
+        
+        const text = await generateSummaryWithRetry(prompt);
+        console.log(text);
+
+        res.json({ 
+            success: true, 
+            summary: text
+        });
     } catch (error) {
         console.error('Gemini error:', error.message);
         
         let errorMsg = 'Lỗi khi tóm tắt với Gemini';
         
-        if (error.response.status === 400) {
+        // Check if this is a rate limit/quota error that we should retry with different keys
+        const isRateLimitError = 
+            (error.response && error.response.status === 429) || 
+            error.message.includes('429') || 
+            error.message.includes('Too Many Requests') || 
+            error.message.includes('Quota exceeded') ||
+            error.message.includes('quota');
+        
+        if (error.response && error.response.status === 400) {
             errorMsg = 'API Key không hợp lệ. Vui lòng cấu hình GEMINI_API_KEY';
-        } else if (error.response.status === 429) {
-            errorMsg = 'Quá nhiều requests. Vui lòng thử lại sau';
+        } else if (isRateLimitError) {
+            errorMsg = 'Tất cả API keys đã đạt giới hạn rate limit/quota. Vui lòng thử lại sau 30 giây hoặc nâng cấp gói dịch vụ';
         } else if (error.message.includes('timeout')) {
             errorMsg = 'Gemini timeout. Vui lòng thử lại';
         }
