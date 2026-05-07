@@ -23,6 +23,6 @@
     "express": "^4.x.x"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.1.14"
   }
 }

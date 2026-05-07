@@ -26,6 +26,10 @@ const apiKeys = [
     process.env.GEMINI_API_KEY3
 ].filter(key => key); // Lọc bỏ các key undefined
 
+if (apiKeys.length === 0) {
+    console.warn('⚠️ Không tìm thấy bất kỳ Gemini API key nào. Vui lòng cấu hình GEMINI_API_KEY hoặc GEMINI_API_KEY1/GEMINI_API_KEY2/GEMINI_API_KEY3.');
+}
+
 let currentKeyIndex = 0;
 
 // Hàm để lấy API key hiện tại
@@ -38,6 +42,38 @@ function getCurrentApiKey() {
 function switchToNextApiKey() {
     currentKeyIndex = (currentKeyIndex + 1) % apiKeys.length;
     console.log(`🔄 Switched to API key ${currentKeyIndex + 1}/${apiKeys.length} due to rate limit`);
+}
+
+function getErrorMessage(error) {
+    if (!error) return 'Unknown error';
+    if (typeof error === 'string') return error;
+    if (error.message) return error.message;
+    if (error.response && error.response.data) {
+        try {
+            return typeof error.response.data === 'string'
+                ? error.response.data
+                : JSON.stringify(error.response.data);
+        } catch {
+            return String(error.response.data);
+        }
+    }
+    return String(error);
+}
+
+function isRateLimitOrHighDemandError(error) {
+    const message = (error?.message || '').toLowerCase();
+    const status = error?.response?.status;
+    return (
+        status === 429 ||
+        status === 503 ||
+        message.includes('429') ||
+        message.includes('503') ||
+        message.includes('too many requests') ||
+        message.includes('quota exceeded') ||
+        message.includes('quota') ||
+        message.includes('service unavailable') ||
+        message.includes('high demand')
+    );
 }
 
 // Khởi tạo với API Key đầu tiên
@@ -172,14 +208,15 @@ app.post('/api/scrape', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Scrape error:', error.message);
+        const errorMessage = getErrorMessage(error);
+        console.error('Scrape error:', errorMessage);
         
         let errorMsg = 'Lỗi khi lấy dữ liệu';
-        if (error.code === 'ENOTFOUND') {
+        if (error?.code === 'ENOTFOUND') {
             errorMsg = 'URL không hợp lệ hoặc không thể truy cập';
-        } else if (error.code === 'ECONNREFUSED') {
+        } else if (error?.code === 'ECONNREFUSED') {
             errorMsg = 'Không thể kết nối đến trang web';
-        } else if (error.message.includes('timeout')) {
+        } else if (errorMessage.toLowerCase().includes('timeout')) {
             errorMsg = 'Kết nối quá chậm (timeout 30s). Vui lòng kiểm tra kết nối internet hoặc thử lại sau.';
         }
 
@@ -192,6 +229,10 @@ app.post('/api/scrape', async (req, res) => {
 
 // Hàm để thử gọi API với retry và switch key
 async function generateSummaryWithRetry(prompt, maxRetries = apiKeys.length) {
+    if (apiKeys.length === 0) {
+        throw new Error('No Gemini API keys configured. Please set GEMINI_API_KEY or GEMINI_API_KEY1/GEMINI_API_KEY2/GEMINI_API_KEY3.');
+    }
+
     let attempts = 0;
     let lastError = null;
 
@@ -210,18 +251,14 @@ async function generateSummaryWithRetry(prompt, maxRetries = apiKeys.length) {
             return text;
         } catch (error) {
             lastError = error;
-            console.error(`❌ Attempt ${attempts + 1}/${maxRetries} failed with API key ${currentKeyIndex + 1}:`, error.message);
+            const errorMessage = getErrorMessage(error);
+            console.error(`❌ Attempt ${attempts + 1}/${maxRetries} failed with API key ${currentKeyIndex + 1}:`, errorMessage);
 
-            // Check for rate limit/quota errors (429 status or quota exceeded messages)
-            const isRateLimitError = 
-                (error.response && error.response.status === 429) || 
-                error.message.includes('429') || 
-                error.message.includes('Too Many Requests') || 
-                error.message.includes('Quota exceeded') ||
-                error.message.includes('quota');
+            // Check for rate limit/quota/high demand errors
+            const isRateLimitError = isRateLimitOrHighDemandError(error);
 
             if (isRateLimitError) {
-                // Rate limit/quota hit, switch to next key
+                // Rate limit/quota hit or high demand service error, switch to next key
                 switchToNextApiKey();
                 attempts++;
                 console.log(`⏳ Retrying with next API key... (${attempts}/${maxRetries})`);
@@ -236,8 +273,8 @@ async function generateSummaryWithRetry(prompt, maxRetries = apiKeys.length) {
     }
 
     // If all retries failed
-    console.error(`🚫 All ${maxRetries} attempts failed. Last error:`, lastError.message);
-    throw lastError;
+    console.error(`🚫 All ${maxRetries} attempts failed. Last error:`, getErrorMessage(lastError));
+    throw lastError || new Error('Unknown Gemini error');
 }
 
 // Gemini Summarize endpoint
@@ -284,23 +321,20 @@ app.post('/api/summarize', async (req, res) => {
             summary: text
         });
     } catch (error) {
-        console.error('Gemini error:', error.message);
+        const errorMessage = getErrorMessage(error);
+        console.error('Gemini error:', errorMessage);
         
         let errorMsg = 'Lỗi khi tóm tắt với Gemini';
         
-        // Check if this is a rate limit/quota error that we should retry with different keys
-        const isRateLimitError = 
-            (error.response && error.response.status === 429) || 
-            error.message.includes('429') || 
-            error.message.includes('Too Many Requests') || 
-            error.message.includes('Quota exceeded') ||
-            error.message.includes('quota');
+        const isRateLimitError = isRateLimitOrHighDemandError(error);
         
-        if (error.response && error.response.status === 400) {
+        if (errorMessage.toLowerCase().includes('no gemini api keys configured')) {
+            errorMsg = 'Chưa cấu hình API key Gemini. Vui lòng thêm GEMINI_API_KEY hoặc GEMINI_API_KEY1/GEMINI_API_KEY2/GEMINI_API_KEY3.';
+        } else if (error?.response && error.response.status === 400) {
             errorMsg = 'API Key không hợp lệ. Vui lòng cấu hình GEMINI_API_KEY';
         } else if (isRateLimitError) {
-            errorMsg = 'Tất cả API keys đã đạt giới hạn rate limit/quota. Vui lòng thử lại sau 30 giây hoặc nâng cấp gói dịch vụ';
-        } else if (error.message.includes('timeout')) {
+            errorMsg = 'Tất cả API keys đã đạt giới hạn rate limit/quota hoặc Gemini đang quá tải. Vui lòng thử lại sau 30 giây hoặc nâng cấp gói dịch vụ';
+        } else if (errorMessage.toLowerCase().includes('timeout')) {
             errorMsg = 'Gemini timeout. Vui lòng thử lại';
         }
 
