@@ -356,6 +356,180 @@
             margin-top: 30px;
             padding: 15px;
         }
+
+        /* Viettel TTS Section Styles */
+        .tts-section {
+            grid-column: 1 / -1;
+        }
+
+        .tts-section .section-title::before {
+            background: #EF5350;
+        }
+
+        .tts-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .tts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .tts-input-area {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        #ttsText {
+            width: 100%;
+            min-height: 150px;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .tts-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9em;
+        }
+
+        #voiceSelect, #speedSelect {
+            padding: 10px 12px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.95em;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #voiceSelect:focus, #speedSelect:focus {
+            outline: none;
+            border-color: #EF5350;
+            box-shadow: 0 0 0 3px rgba(239, 83, 80, 0.1);
+        }
+
+        .tts-controls button {
+            padding: 12px 16px;
+            font-size: 0.9em;
+        }
+
+        .btn-tts {
+            background: linear-gradient(135deg, #EF5350, #F44336);
+            color: white;
+        }
+
+        .btn-tts:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(239, 83, 80, 0.3);
+        }
+
+        .btn-listen {
+            background: linear-gradient(135deg, #4CAF50, #66BB6A);
+            color: white;
+        }
+
+        .btn-listen:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, #2196F3, #42A5F5);
+            color: white;
+        }
+
+        .btn-download:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(33, 150, 243, 0.3);
+        }
+
+        .tts-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .button-wrapper {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .button-wrapper button {
+            width: 100%;
+        }
+
+        .audio-player {
+            background: var(--bg-light);
+            padding: 12px;
+            border-radius: 10px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .audio-player.show {
+            display: block;
+        }
+
+        .audio-player audio {
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .char-count-tts {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .tts-status {
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .tts-status.show {
+            display: block;
+        }
+
+        .tts-status.success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid var(--success);
+        }
+
+        .tts-status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid var(--error);
+        }
+
+        .tts-status.loading {
+            background: #dbeafe;
+            color: #0c2340;
+            border-left: 4px solid var(--accent);
+        }
     </style>
 </head>
 <body>
@@ -439,6 +613,102 @@
                     <div class="info-box" style="background: #f3e5f5; border-color: var(--gemini); color: #6a1b9a;">
                         <strong>🎯 Format TikTok:</strong>
                         3 đoạn văn (mở-thân-kết), mỗi đoạn 3 dòng, phù hợp cho nội dung tin ngắn
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Viettel TTS Section -->
+        <div class="section tts-section">
+            <div class="section-title">🔊 Viettel Text-to-Speech</div>
+            <div class="tts-container">
+                <!-- Input Area -->
+                <div class="tts-input-area">
+                    <textarea 
+                        id="ttsText" 
+                        placeholder="Nhập văn bản tiếng Việt tối đa 300 ký tự (hoặc chọn từ nội dung gốc ở trên)..."
+                    ></textarea>
+                    <div class="char-count-tts" id="ttsCharCount">0/300 ký tự</div>
+                    <button class="btn-secondary" id="copyFromContentBtn">
+                        📋 Copy từ Nội Dung Gốc
+                    </button>
+                </div>
+
+                <!-- Controls Area -->
+                <div class="tts-controls">
+                    <!-- Voice Selection -->
+                    <div class="control-group">
+                        <label for="voiceSelect">🎤 Chọn Giọng Đọc:</label>
+                        <select id="voiceSelect">
+                            <optgroup label="🗻 Miền Bắc">
+                                <option value="hn-quynhanh">Quỳnh Anh (Nữ - Bắc)</option>
+                                <option value="hn-phuongtrang">Phương Trang (Nữ - Bắc)</option>
+                                <option value="hn-thaochi">Thảo Chi (Nữ - Bắc)</option>
+                                <option value="hn-thanhha">Thanh Hà (Nữ - Bắc)</option>
+                                <option value="hn-thanhphuong">Thanh Phương (Nữ - Bắc)</option>
+                                <option value="hn-thanhtung">Thanh Tùng (Nam - Bắc)</option>
+                                <option value="hn-namkhanh">Nam Khánh (Nam - Bắc)</option>
+                                <option value="hn-tienquan">Tiến Quân (Nam - Bắc)</option>
+                            </optgroup>
+                            <optgroup label="🏔️ Miền Trung">
+                                <option value="hue-maingoc">Mai Ngọc (Nữ - Trung)</option>
+                                <option value="hue-baoquoc">Bảo Quốc (Nam - Trung)</option>
+                            </optgroup>
+                            <optgroup label="🌴 Miền Nam">
+                                <option value="hcm-diemmy">Diễm My (Nữ - Nam)</option>
+                                <option value="hcm-phuongly">Phương Ly (Nữ - Nam)</option>
+                                <option value="hcm-thuydung">Thủy Dung (Nữ - Nam)</option>
+                                <option value="hcm-thuyduyen">Thủy Duyên (Nữ - Nam)</option>
+                                <option value="hcm-leyen">Lệ Yên (Nữ - Nam)</option>
+                                <option value="hcm-minhquan">Minh Quân (Nam - Nam)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <!-- Speed Selection -->
+                    <div class="control-group">
+                        <label for="speedSelect">⚡ Tốc Độ Đọc:</label>
+                        <select id="speedSelect">
+                            <option value="0.8">Chậm (0.8x)</option>
+                            <option value="0.9">Vừa Chậm (0.9x)</option>
+                            <option value="1" selected>Bình Thường (1x)</option>
+                            <option value="1.1">Vừa Nhanh (1.1x)</option>
+                            <option value="1.2">Nhanh (1.2x)</option>
+                        </select>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="tts-buttons">
+                        <div class="button-wrapper">
+                            <button class="btn-tts" id="convertBtn">
+                                🎙️ Chuyển Thành Âm Thanh
+                            </button>
+                        </div>
+                        <div class="button-wrapper">
+                            <button class="btn-listen" id="playBtn" disabled>
+                                ▶️ Nghe Thử
+                            </button>
+                        </div>
+                        <div class="button-wrapper">
+                            <button class="btn-download" id="downloadBtn" disabled>
+                                ⬇️ Tải Về
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Audio Player -->
+                    <div class="audio-player" id="audioPlayer">
+                        <audio id="audioElement" controls></audio>
+                        <div class="tts-status" id="playerStatus"></div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="tts-status" id="ttsStatus"></div>
+
+                    <!-- Info -->
+                    <div class="info-box" style="background: #fff3e0; border-color: #FF6F00; color: #E65100;">
+                        <strong>💡 Hướng dẫn:</strong>
+                        Nhập hoặc copy văn bản, chọn giọng đọc và tốc độ, sau đó nhấn "Chuyển Thành Âm Thanh" để tạo âm thanh. Bạn có thể nghe thử hoặc tải về dạng MP3.
                     </div>
                 </div>
             </div>
@@ -611,6 +881,163 @@
         // Focus on input on load
         window.addEventListener('load', () => {
             urlInput.focus();
+        });
+
+        // ==================== VIETTEL TTS SECTION ====================
+        const ttsText = document.getElementById('ttsText');
+        const ttsCharCount = document.getElementById('ttsCharCount');
+        const voiceSelect = document.getElementById('voiceSelect');
+        const speedSelect = document.getElementById('speedSelect');
+        const convertBtn = document.getElementById('convertBtn');
+        const playBtn = document.getElementById('playBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const copyFromContentBtn = document.getElementById('copyFromContentBtn');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const audioElement = document.getElementById('audioElement');
+        const ttsStatus = document.getElementById('ttsStatus');
+        const playerStatus = document.getElementById('playerStatus');
+
+        let audioBlob = null;
+        let audioUrl = null;
+
+        // Event Listeners for TTS
+        ttsText.addEventListener('input', updateTtsCharCount);
+        convertBtn.addEventListener('click', convertToSpeech);
+        playBtn.addEventListener('click', playAudio);
+        downloadBtn.addEventListener('click', downloadAudio);
+        copyFromContentBtn.addEventListener('click', copyFromContent);
+
+        ttsText.addEventListener('keypress', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                convertToSpeech();
+            }
+        });
+
+        function updateTtsCharCount() {
+            const length = ttsText.value.length;
+            const remaining = 300 - length;
+            const color = remaining < 0 ? '#ef4444' : 'var(--text-secondary)';
+            ttsCharCount.textContent = `${length}/300 ký tự`;
+            ttsCharCount.style.color = color;
+
+            if (length > 300) {
+                ttsText.value = ttsText.value.substring(0, 300);
+                ttsCharCount.textContent = '300/300 ký tự (Tối đa)';
+            }
+        }
+
+        function copyFromContent() {
+            if (!outputText.value) {
+                showTtsStatus('error', '❌ Chưa có nội dung để copy');
+                return;
+            }
+
+            // Copy first 300 characters
+            const content = outputText.value.substring(0, 300);
+            ttsText.value = content;
+            updateTtsCharCount();
+            showTtsStatus('success', '✅ Đã copy nội dung!');
+            setTimeout(() => ttsStatus.classList.remove('show'), 2000);
+        }
+
+        async function convertToSpeech() {
+            const text = ttsText.value.trim();
+
+            if (!text) {
+                showTtsStatus('error', '❌ Vui lòng nhập văn bản');
+                return;
+            }
+
+            if (text.length > 300) {
+                showTtsStatus('error', '❌ Văn bản không được vượt quá 300 ký tự');
+                return;
+            }
+
+            convertBtn.disabled = true;
+            playBtn.disabled = true;
+            downloadBtn.disabled = true;
+            showTtsStatus('loading', '<span class="spinner"></span>Đang chuyển đổi thành âm thanh...');
+
+            try {
+                const response = await fetch('/api/tts/convert', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: text,
+                        voice: voiceSelect.value,
+                        speed: parseFloat(speedSelect.value)
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Lỗi khi chuyển đổi');
+                }
+
+                // Get audio blob
+                audioBlob = await response.blob();
+                audioUrl = URL.createObjectURL(audioBlob);
+
+                // Set audio source
+                audioElement.src = audioUrl;
+
+                // Show audio player
+                audioPlayer.classList.add('show');
+                showTtsStatus('success', '✅ Chuyển đổi thành công! Nghe thử hoặc tải về.');
+                playBtn.disabled = false;
+                downloadBtn.disabled = false;
+
+            } catch (error) {
+                console.error('Error:', error);
+                showTtsStatus('error', '❌ Lỗi: ' + error.message);
+                audioPlayer.classList.remove('show');
+                playBtn.disabled = true;
+                downloadBtn.disabled = true;
+            } finally {
+                convertBtn.disabled = false;
+            }
+        }
+
+        function playAudio() {
+            if (!audioElement.src) {
+                showTtsStatus('error', '❌ Chưa có âm thanh để phát');
+                return;
+            }
+            audioElement.play();
+        }
+
+        function downloadAudio() {
+            if (!audioBlob) {
+                showTtsStatus('error', '❌ Chưa có âm thanh để tải');
+                return;
+            }
+
+            // Generate filename with timestamp
+            const timestamp = new Date().toLocaleTimeString('vi-VN').replace(/:/g, '-');
+            const filename = `audio_${timestamp}.mp3`;
+
+            // Create download link
+            const downloadLink = document.createElement('a');
+            downloadLink.href = audioUrl;
+            downloadLink.download = filename;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+
+            showTtsStatus('success', `✅ Đã tải "${filename}"`);
+            setTimeout(() => ttsStatus.classList.remove('show'), 3000);
+        }
+
+        function showTtsStatus(type, message) {
+            ttsStatus.className = `tts-status show ${type}`;
+            ttsStatus.innerHTML = message;
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (audioUrl) {
+                URL.revokeObjectURL(audioUrl);
+            }
         });
     </script>
 </body>
