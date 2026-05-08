@@ -63,7 +63,7 @@ function getErrorMessage(error) {
 
 function isRateLimitOrHighDemandError(error) {
     const message = (error.message || '').toLowerCase();
-    const status = error.response.status;
+    const status = error.response?.status;
     return (
         status === 429 ||
         status === 503 ||
@@ -481,6 +481,49 @@ ${joined}`;
     return ['Không xác định', '', '', '', ''];
 }
 
+// Extract date from article page
+async function extractArticleDate(articleUrl) {
+    try {
+        const html = await safeFetch(articleUrl);
+        if (!html) return null;
+        
+        const $ = cheerio.load(html);
+        let dateStr = '';
+        
+        // Try Kenh14 specific selector first
+        dateStr = $('span.kbwcm-time').attr('title') ||
+                  $('meta[property="article:published_time"]').attr('content') ||
+                  $('meta[name="publish_date"]').attr('content') ||
+                  $('meta[property="og:published_time"]').attr('content') ||
+                  $('time').attr('datetime') ||
+                  $('[class*="published"], [class*="date"], [class*="time"]').first().attr('datetime') ||
+                  '';
+        
+        if (dateStr) {
+            const publishDate = new Date(dateStr);
+            if (!isNaN(publishDate.getTime())) {
+                return publishDate.getTime();
+            }
+        }
+        
+        // Fallback: try to parse from text
+        const timeText = $('time').first().text() || 
+                        $('[class*="published"]').first().text() ||
+                        $('[class*="date"]').first().text() || 
+                        $('span.kbwcm-time').first().text() || '';
+        
+        if (timeText.includes('vừa xong') || timeText.includes('Vừa xong')) return Date.now();
+        if (timeText.includes('1 phút') || timeText.includes('vài phút')) return Date.now() - 5 * 60 * 1000;
+        if (timeText.includes('1 giờ') || timeText.includes('vài giờ')) return Date.now() - 30 * 60 * 1000;
+        if (timeText.includes('1 ngày') || timeText.includes('hôm qua')) return Date.now() - 24 * 60 * 60 * 1000;
+        
+        return null;
+    } catch (err) {
+        console.warn(`⚠️ Failed to extract date from ${articleUrl}:`, err.message);
+        return null;
+    }
+}
+
 // Scrape articles từ một trang, trả về [{title, url, source, date}]
 async function scrapeArticlesFromSource(sourceUrl, sourceName, people) {
     const html = await safeFetch(sourceUrl);
@@ -510,10 +553,24 @@ async function scrapeArticlesFromSource(sourceUrl, sourceName, people) {
         const matched = people.some(p => p && titleLower.includes(p.toLowerCase().split(' ').pop()));
         if (!matched) return;
 
-        results.push({ title, url: fullUrl, source: sourceName });
+        results.push({ title, url: fullUrl, source: sourceName, dateChecked: false });
     });
 
-    return results.slice(0, 20);
+    // Filter by 48-hour window
+    const filtered = [];
+    for (const article of results) {
+        const articleDate = await extractArticleDate(article.url);
+        if (articleDate && (now - articleDate) <= limit48h) {
+            filtered.push({ 
+                title: article.title, 
+                url: article.url, 
+                source: article.source,
+                date: new Date(articleDate).toISOString()
+            });
+        }
+    }
+
+    return filtered.slice(0, 20);
 }
 
 // Thu thập top 5 bài viết liên quan đến các nhân vật hot
@@ -521,9 +578,9 @@ async function fetchTop5Articles(people) {
     const sources = [
         { url: 'https://kenh14.vn/star.chn', name: 'Kenh14' },
         { url: 'https://www.saostar.vn/giai-tri/', name: 'Saostar' },
-        { url: 'https://www.theanh28entertainment.com/', name: 'Theanh28' },
-        { url: 'https://beatvn.com/', name: 'BeatVN' },
-        { url: 'https://www.yan.vn/entertainment/', name: 'YAN News' }
+        { url: 'https://www.facebook.com/Theanh28/', name: 'Theanh28' },
+        { url: 'https://www.tiktok.com/@beatvn_official', name: 'BeatVN' },
+        { url: 'https://www.facebook.com/yannews/?locale=vi_VN', name: 'YAN News' }
     ];
 
     let allArticles = [];
