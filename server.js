@@ -5,6 +5,7 @@ const path = require('path');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const cron = require('node-cron');
 
 // import cors from 'cors';
 // import cheerio from 'cheerio';
@@ -61,8 +62,8 @@ function getErrorMessage(error) {
 }
 
 function isRateLimitOrHighDemandError(error) {
-    const message = (error?.message || '').toLowerCase();
-    const status = error?.response?.status;
+    const message = (error.message || '').toLowerCase();
+    const status = error.response.status;
     return (
         status === 429 ||
         status === 503 ||
@@ -100,16 +101,16 @@ app.post('/api/scrape', async (req, res) => {
         const { url } = req.body;
 
         if (!url) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'URL là bắt buộc' 
+            return res.status(400).json({
+                success: false,
+                error: 'URL là bắt buộc'
             });
         }
 
         if (!(url.includes('kenh14.vn') || url.includes('saostar.vn'))) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'URL phải từ kenh14.vn hoặc saostar.vn' 
+            return res.status(400).json({
+                success: false,
+                error: 'URL phải từ kenh14.vn hoặc saostar.vn'
             });
         }
 
@@ -133,13 +134,13 @@ app.post('/api/scrape', async (req, res) => {
 
         // Extract title
         let title = '';
-        
+
         // Try multiple selectors
         title = $('h1.fck_title').text().trim() ||
-                $('article h1').first().text().trim() ||
-                $('h1').first().text().trim() ||
-                $('meta[property="og:title"]').attr('content') ||
-                '';
+            $('article h1').first().text().trim() ||
+            $('h1').first().text().trim() ||
+            $('meta[property="og:title"]').attr('content') ||
+            '';
 
         // Extract content
         let content = '';
@@ -155,40 +156,40 @@ app.post('/api/scrape', async (req, res) => {
         // Try primary selector only if no content yet
         if (!content) {
             let contentDiv = $('.fck_detail').first();
-        
-        if (!contentDiv.length) {
-            contentDiv = $('.article-content').first();
-        }
-        
-        if (!contentDiv.length) {
-            contentDiv = $('article').first();
-        }
-        
-        if (!contentDiv.length) {
-            contentDiv = $('[itemtype*="Article"]').first();
-        }
 
-        // If still not found, try common patterns
-        if (!contentDiv.length) {
-            contentDiv = $('div[class*="content"]').first();
-        }
-
-        if (contentDiv.length) {
-            // Get all paragraphs
-            const paragraphs = contentDiv.find('p');
-            
-            if (paragraphs.length > 0) {
-                paragraphs.each((i, el) => {
-                    const text = $(el).text().trim();
-                    if (text) {
-                        content += text + '\n\n';
-                    }
-                });
-            } else {
-                // Fallback: get all text
-                content = contentDiv.text().trim();
+            if (!contentDiv.length) {
+                contentDiv = $('.article-content').first();
             }
-        }
+
+            if (!contentDiv.length) {
+                contentDiv = $('article').first();
+            }
+
+            if (!contentDiv.length) {
+                contentDiv = $('[itemtype*="Article"]').first();
+            }
+
+            // If still not found, try common patterns
+            if (!contentDiv.length) {
+                contentDiv = $('div[class*="content"]').first();
+            }
+
+            if (contentDiv.length) {
+                // Get all paragraphs
+                const paragraphs = contentDiv.find('p');
+
+                if (paragraphs.length > 0) {
+                    paragraphs.each((i, el) => {
+                        const text = $(el).text().trim();
+                        if (text) {
+                            content += text + '\n\n';
+                        }
+                    });
+                } else {
+                    // Fallback: get all text
+                    content = contentDiv.text().trim();
+                }
+            }
         }
 
         // Combine and clean
@@ -204,14 +205,14 @@ app.post('/api/scrape', async (req, res) => {
             .trim();
 
         if (!fullContent) {
-            return res.status(404).json({ 
-                success: false, 
-                error: 'Không tìm thấy nội dung bài viết' 
+            return res.status(404).json({
+                success: false,
+                error: 'Không tìm thấy nội dung bài viết'
             });
         }
 
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             title: title,
             content: fullContent,
             charCount: fullContent.length,
@@ -221,19 +222,19 @@ app.post('/api/scrape', async (req, res) => {
     } catch (error) {
         const errorMessage = getErrorMessage(error);
         console.error('Scrape error:', errorMessage);
-        
+
         let errorMsg = 'Lỗi khi lấy dữ liệu';
-        if (error?.code === 'ENOTFOUND') {
+        if (error.code === 'ENOTFOUND') {
             errorMsg = 'URL không hợp lệ hoặc không thể truy cập';
-        } else if (error?.code === 'ECONNREFUSED') {
+        } else if (error.code === 'ECONNREFUSED') {
             errorMsg = 'Không thể kết nối đến trang web';
         } else if (errorMessage.toLowerCase().includes('timeout')) {
             errorMsg = 'Kết nối quá chậm (timeout 30s). Vui lòng kiểm tra kết nối internet hoặc thử lại sau.';
         }
 
-        res.status(500).json({ 
-            success: false, 
-            error: errorMsg 
+        res.status(500).json({
+            success: false,
+            error: errorMsg
         });
     }
 });
@@ -294,9 +295,9 @@ app.post('/api/summarize', async (req, res) => {
         const { content } = req.body;
 
         if (!content) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Nội dung là bắt buộc' 
+            return res.status(400).json({
+                success: false,
+                error: 'Nội dung là bắt buộc'
             });
         }
 
@@ -323,25 +324,25 @@ app.post('/api/summarize', async (req, res) => {
 
             NỘI DUNG BÀI BÁO CẦN TÓM TẮT:
             ${content}`;
-        
+
         const text = await generateSummaryWithRetry(prompt);
         console.log(text);
 
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             summary: text
         });
     } catch (error) {
         const errorMessage = getErrorMessage(error);
         console.error('Gemini error:', errorMessage);
-        
+
         let errorMsg = 'Lỗi khi tóm tắt với Gemini';
-        
+
         const isRateLimitError = isRateLimitOrHighDemandError(error);
-        
+
         if (errorMessage.toLowerCase().includes('no gemini api keys configured')) {
             errorMsg = 'Chưa cấu hình API key Gemini. Vui lòng thêm GEMINI_API_KEY hoặc GEMINI_API_KEY1/GEMINI_API_KEY2/GEMINI_API_KEY3.';
-        } else if (error?.response && error.response.status === 400) {
+        } else if (error.response && error.response.status === 400) {
             errorMsg = 'API Key không hợp lệ. Vui lòng cấu hình GEMINI_API_KEY';
         } else if (isRateLimitError) {
             errorMsg = 'Tất cả API keys đã đạt giới hạn rate limit/quota hoặc Gemini đang quá tải. Vui lòng thử lại sau 30 giây hoặc nâng cấp gói dịch vụ';
@@ -356,7 +357,264 @@ app.post('/api/summarize', async (req, res) => {
     }
 });
 
+// ============================================================
+// TRENDING FEATURE
+// ============================================================
+
+// In-memory cache
+let trendingCache = {
+    people: [],
+    articles: [],
+    updatedAt: null
+};
+
+const AXIOS_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Language': 'vi-VN,vi;q=0.9,en;q=0.8',
+    'Cache-Control': 'no-cache'
+};
+
+// Safe fetch: trả về '' nếu lỗi thay vì throw
+async function safeFetch(url, options = {}) {
+    try {
+        const res = await axios.get(url, {
+            headers: AXIOS_HEADERS,
+            timeout: 15000,
+            maxRedirects: 5,
+            ...options
+        });
+        return res.data;
+    } catch (err) {
+        console.warn(`⚠️  safeFetch failed for ${url}: ${err.message}`);
+        return '';
+    }
+}
+
+// Lấy top trending searches từ Google Trends RSS (VN)
+async function fetchGoogleTrendsVN() {
+    const url = 'https://trends.google.com/trending/rss?geo=VN';
+    const xml = await safeFetch(url);
+    if (!xml) return [];
+
+    const $ = cheerio.load(xml, { xmlMode: true });
+    const titles = [];
+    $('item title').each((i, el) => {
+        const t = $(el).text().trim();
+        if (t) titles.push(t);
+    });
+    console.log(`📊 Google Trends VN: ${titles.slice(0, 10).join(', ')}`);
+    return titles.slice(0, 30);
+}
+
+// Scrape tiêu đề bài viết từ Kenh14 star page
+async function scrapeKenh14Headlines() {
+    const html = await safeFetch('https://kenh14.vn/star.chn');
+    if (!html) return [];
+    const $ = cheerio.load(html);
+    const titles = [];
+    // Lấy tiêu đề bài viết
+    $('h3.knc-title, h3.title, .item-title, .news-title, .box-category-item h3, .knc-box h3, h2.knc-title').each((i, el) => {
+        const t = $(el).text().trim();
+        if (t && t.length > 10) titles.push(t);
+    });
+    // Fallback: lấy tất cả h3
+    if (titles.length < 5) {
+        $('h3').each((i, el) => {
+            const t = $(el).text().trim();
+            if (t && t.length > 10) titles.push(t);
+        });
+    }
+    console.log(`📰 Kenh14 headlines: ${titles.length} titles`);
+    return titles.slice(0, 30);
+}
+
+// Scrape tiêu đề từ Saostar
+async function scrapeSaostarHeadlines() {
+    const html = await safeFetch('https://www.saostar.vn/giai-tri/');
+    if (!html) return [];
+    const $ = cheerio.load(html);
+    const titles = [];
+    $('h2, h3, .news-title, .article-title, .title').each((i, el) => {
+        const t = $(el).text().trim();
+        if (t && t.length > 10) titles.push(t);
+    });
+    console.log(`📰 Saostar headlines: ${titles.length} titles`);
+    return titles.slice(0, 30);
+}
+
+// Dùng Gemini phân tích danh sách tiêu đề và trả về top 5 tên nhân vật
+async function analyzeTop5PeopleWithGemini(allHeadlines) {
+    if (allHeadlines.length === 0) {
+        return ['Không có dữ liệu', '', '', '', ''];
+    }
+
+    const joined = allHeadlines.slice(0, 80).join('\n');
+    const prompt = `Bạn là chuyên gia phân tích xu hướng mạng xã hội.
+Dưới đây là danh sách các tiêu đề bài báo giải trí và trending searches Việt Nam thu thập trong 48h qua.
+
+Nhiệm vụ: Phân tích và trả về ĐÚNG 5 tên nhân vật (ca sĩ, diễn viên, người nổi tiếng VN hoặc quốc tế) đang được nhắc đến nhiều nhất / đang hot nhất.
+
+Quy tắc:
+- Chỉ trả về MỘT JSON array, ví dụ: ["Tên 1", "Tên 2", "Tên 3", "Tên 4", "Tên 5"]
+- Đúng 5 phần tử, không nhiều hơn không ít hơn
+- Ưu tiên người có nhiều lần xuất hiện trong các tiêu đề
+- Nếu không đủ 5 người rõ ràng, điền tên nổi tiếng nhất bạn xác định được
+- KHÔNG giải thích, chỉ xuất ra JSON array
+
+Dữ liệu:
+${joined}`;
+
+    try {
+        const raw = await generateSummaryWithRetry(prompt);
+        // Tìm JSON array trong response
+        const match = raw.match(/\[.*?\]/s);
+        if (match) {
+            const parsed = JSON.parse(match[0]);
+            if (Array.isArray(parsed)) {
+                return parsed.slice(0, 5).map(n => String(n).trim());
+            }
+        }
+    } catch (err) {
+        console.warn('⚠️  Gemini people analysis failed:', err.message);
+    }
+    return ['Không xác định', '', '', '', ''];
+}
+
+// Scrape articles từ một trang, trả về [{title, url, source, date}]
+async function scrapeArticlesFromSource(sourceUrl, sourceName, people) {
+    const html = await safeFetch(sourceUrl);
+    if (!html) return [];
+    const $ = cheerio.load(html);
+    const results = [];
+    const now = Date.now();
+    const limit48h = 48 * 60 * 60 * 1000;
+
+    // Lấy tất cả link có title
+    $('a').each((i, el) => {
+        const title = $(el).text().trim();
+        const href = $(el).attr('href') || '';
+        if (!title || title.length < 15 || !href || href === '#') return;
+
+        // Kiểm tra href hợp lệ
+        let fullUrl = href;
+        if (href.startsWith('/')) {
+            const base = new URL(sourceUrl);
+            fullUrl = `${base.protocol}//${base.host}${href}`;
+        } else if (!href.startsWith('http')) {
+            return;
+        }
+
+        // Kiểm tra có đề cập đến người nào trong top 5 không
+        const titleLower = title.toLowerCase();
+        const matched = people.some(p => p && titleLower.includes(p.toLowerCase().split(' ').pop()));
+        if (!matched) return;
+
+        results.push({ title, url: fullUrl, source: sourceName });
+    });
+
+    return results.slice(0, 20);
+}
+
+// Thu thập top 5 bài viết liên quan đến các nhân vật hot
+async function fetchTop5Articles(people) {
+    const sources = [
+        { url: 'https://kenh14.vn/star.chn', name: 'Kenh14' },
+        { url: 'https://www.saostar.vn/giai-tri/', name: 'Saostar' },
+        { url: 'https://www.theanh28entertainment.com/', name: 'Theanh28' },
+        { url: 'https://beatvn.com/', name: 'BeatVN' },
+        { url: 'https://www.yan.vn/entertainment/', name: 'YAN News' }
+    ];
+
+    let allArticles = [];
+
+    for (const src of sources) {
+        if (allArticles.length >= 5) break;
+        const articles = await scrapeArticlesFromSource(src.url, src.name, people);
+        allArticles = [...allArticles, ...articles];
+        console.log(`📄 ${src.name}: ${articles.length} matched articles`);
+    }
+
+    // Dedupe by URL
+    const seen = new Set();
+    const unique = allArticles.filter(a => {
+        if (seen.has(a.url)) return false;
+        seen.add(a.url);
+        return true;
+    });
+
+    return unique.slice(0, 5);
+}
+
+// Hàm chính: cập nhật toàn bộ trending data
+async function updateTrendingData() {
+    console.log('🔄 Bắt đầu cập nhật trending data...');
+    try {
+        // Thu thập dữ liệu song song
+        const [googleTrends, kenh14Headlines, saostarHeadlines] = await Promise.all([
+            fetchGoogleTrendsVN(),
+            scrapeKenh14Headlines(),
+            scrapeSaostarHeadlines()
+        ]);
+
+        const allHeadlines = [
+            ...googleTrends,
+            ...kenh14Headlines,
+            ...saostarHeadlines
+        ];
+
+        console.log(`📊 Tổng số tiêu đề thu thập được: ${allHeadlines.length}`);
+
+        // Dùng Gemini xác định top 5 nhân vật
+        const top5People = await analyzeTop5PeopleWithGemini(allHeadlines);
+        console.log('🌟 Top 5 nhân vật:', top5People);
+
+        // Tìm top 5 bài viết liên quan
+        const top5Articles = await fetchTop5Articles(top5People);
+        console.log(`📰 Top 5 articles: ${top5Articles.length} found`);
+
+        // Cập nhật cache
+        trendingCache = {
+            people: top5People,
+            articles: top5Articles,
+            updatedAt: new Date().toISOString()
+        };
+
+        console.log('✅ Trending data đã cập nhật thành công!');
+    } catch (err) {
+        console.error('❌ Lỗi cập nhật trending:', err.message);
+    }
+}
+
+// API: GET /api/trending – trả về cache hiện tại
+app.get('/api/trending', async (req, res) => {
+    // Nếu cache trống thì fetch ngay
+    if (!trendingCache.updatedAt) {
+        await updateTrendingData();
+    }
+    res.json({ success: true, ...trendingCache });
+});
+
+// API: POST /api/trending/refresh – cập nhật thủ công
+app.post('/api/trending/refresh', async (req, res) => {
+    await updateTrendingData();
+    res.json({ success: true, ...trendingCache });
+});
+
+// Scheduler: cập nhật lúc 9:00 sáng mỗi ngày (giờ VN = UTC+7)
+// Cron '0 9 * * *' là 9:00 giờ server. Nếu server chạy UTC thì dùng '0 2 * * *'
+cron.schedule('0 9 * * *', () => {
+    console.log('⏰ [Scheduler] 9:00 SA – đang cập nhật trending...');
+    updateTrendingData();
+}, {
+    timezone: 'Asia/Ho_Chi_Minh'
+});
+
+// Khởi động server
 app.listen(PORT, () => {
     console.log(`🚀 Server running at http://localhost:${PORT}`);
     console.log('📰 Kênh14 Scraper is ready!');
+    console.log('⏰ Trending sẽ tự cập nhật lúc 9:00 SA mỗi ngày (giờ VN)');
+    // Fetch trending data khi khởi động
+    setTimeout(() => updateTrendingData(), 2000);
 });

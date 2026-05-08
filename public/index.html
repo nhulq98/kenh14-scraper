@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -46,6 +47,7 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -89,7 +91,7 @@
             .main-content {
                 grid-template-columns: 1fr 1fr;
             }
-            
+
             .gemini-section {
                 grid-column: 1 / -1;
             }
@@ -269,6 +271,7 @@
                 opacity: 0;
                 transform: translateY(-10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -356,18 +359,375 @@
             margin-top: 30px;
             padding: 15px;
         }
+
+        /* ===== TRENDING PANEL ===== */
+        .trending-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @media (max-width: 768px) {
+            .trending-panel {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .trending-section {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .trending-section:hover {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.13);
+        }
+
+        .trending-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #FF4655, #ff914d, #FFD700, #00d4ff, #8E44AD);
+            border-radius: 16px 16px 0 0;
+        }
+
+        .trending-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .trending-title {
+            font-size: 1.05em;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .trending-meta {
+            font-size: 0.75em;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-refresh {
+            background: none;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 4px 10px;
+            font-size: 0.8em;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.25s;
+            flex: unset;
+            text-transform: none;
+            letter-spacing: 0;
+            font-weight: 500;
+        }
+
+        .btn-refresh:hover {
+            background: var(--bg-light);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-refresh.spinning {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .btn-refresh.spinning .refresh-icon {
+            display: inline-block;
+            animation: spin 0.7s linear infinite;
+        }
+
+        /* People list */
+        .people-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .people-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: var(--bg-light);
+            transition: background 0.2s;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .people-item:hover {
+            background: #f0f4f8;
+        }
+
+        .rank-badge {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            font-weight: 700;
+            flex-shrink: 0;
+            color: white;
+        }
+
+        .rank-1 {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+        }
+
+        .rank-2 {
+            background: linear-gradient(135deg, #C0C0C0, #aaa);
+        }
+
+        .rank-3 {
+            background: linear-gradient(135deg, #CD7F32, #b87333);
+        }
+
+        .rank-4 {
+            background: linear-gradient(135deg, #FF4655, #ff6b7f);
+        }
+
+        .rank-5 {
+            background: linear-gradient(135deg, #8E44AD, #A569BD);
+        }
+
+        .people-name {
+            font-weight: 600;
+            font-size: 0.95em;
+            color: var(--text-primary);
+        }
+
+        /* Articles list */
+        .articles-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .article-item {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: var(--bg-light);
+            transition: background 0.2s;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .article-item:hover {
+            background: #f0f4f8;
+        }
+
+        .article-num {
+            font-size: 0.75em;
+            font-weight: 700;
+            color: white;
+            background: var(--primary);
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .article-info {
+            flex: 1;
+        }
+
+        .article-link {
+            font-size: 0.88em;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-decoration: none;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .article-link:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+
+        .article-source {
+            font-size: 0.72em;
+            color: var(--text-secondary);
+            margin-top: 3px;
+        }
+
+        /* Skeleton loader */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite;
+            border-radius: 8px;
+            height: 18px;
+            margin: 6px 0;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        .skeleton-item {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: var(--bg-light);
+            margin-bottom: 8px;
+        }
+
+        .skeleton-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite;
+            flex-shrink: 0;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
             <h1>
-                <img src="https://kenh14cdn.com/web_images/kenh14-favicon.ico" alt="Kênh14" style="width: 94px;height: 76px;vertical-align:middle;margin-right:8px;">
+                <img src="https://kenh14cdn.com/web_images/kenh14-favicon.ico" alt="Kênh14"
+                    style="width: 94px;height: 76px;vertical-align:middle;margin-right:8px;">
                 &amp;
-                <img src="https://statics-pc.saostar.vn/static/icons/logoSaostarTapchi.svg?v=2.52" alt="Saostar" style="width: 200px;height: 70px;vertical-align:middle;margin:0 8px 0 8px;">
-                <img src="https://www.gstatic.com/lamda/images/gemini_aurora_thumbnail_4g_e74822ff0ca4259beb718.png" alt="Saostar" style="width: 170px;height: 115px;vertical-align:middle;margin:0 8px 0 8px;">
+                <img src="https://statics-pc.saostar.vn/static/icons/logoSaostarTapchi.svg?v=2.52" alt="Saostar"
+                    style="width: 200px;height: 70px;vertical-align:middle;margin:0 8px 0 8px;">
+                <img src="https://www.gstatic.com/lamda/images/gemini_aurora_thumbnail_4g_e74822ff0ca4259beb718.png"
+                    alt="Saostar" style="width: 170px;height: 115px;vertical-align:middle;margin:0 8px 0 8px;">
             </h1>
             <p>Lấy nội dung bài viết và tóm tắt tự động bằng AI</p>
+        </div>
+
+        <!-- TRENDING PANEL -->
+        <div class="trending-panel" id="trendingPanel">
+            <!-- Top 5 People -->
+            <div class="trending-section">
+                <div class="trending-header">
+                    <div class="trending-title">🔥 Top 5 Nhân Vật Hot Trend 48h</div>
+                    <div class="trending-meta">
+                        <span id="trendingUpdatedAt">--</span>
+                        <button class="btn-refresh" id="refreshTrendingBtn" onclick="refreshTrending()">
+                            <span class="refresh-icon">↻</span> Refresh
+                        </button>
+                    </div>
+                </div>
+                <ul class="people-list" id="peopleList">
+                    <!-- Skeleton -->
+                    <li class="skeleton-item">
+                        <div class="skeleton-circle"></div>
+                        <div class="skeleton" style="flex:1"></div>
+                    </li>
+                    <li class="skeleton-item">
+                        <div class="skeleton-circle"></div>
+                        <div class="skeleton" style="flex:1"></div>
+                    </li>
+                    <li class="skeleton-item">
+                        <div class="skeleton-circle"></div>
+                        <div class="skeleton" style="flex:1"></div>
+                    </li>
+                    <li class="skeleton-item">
+                        <div class="skeleton-circle"></div>
+                        <div class="skeleton" style="flex:1"></div>
+                    </li>
+                    <li class="skeleton-item">
+                        <div class="skeleton-circle"></div>
+                        <div class="skeleton" style="flex:1"></div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Top 5 Articles -->
+            <div class="trending-section">
+                <div class="trending-header">
+                    <div class="trending-title">📰 Top 5 Bài Viết Trending</div>
+                    <div class="trending-meta">
+                        <span id="articlesUpdatedAt">--</span>
+                    </div>
+                </div>
+                <ul class="articles-list" id="articlesList">
+                    <!-- Skeleton -->
+                    <li class="skeleton-item">
+                        <div class="skeleton-circle"></div>
+                        <div style="flex:1">
+                            <div class="skeleton"></div>
+                            <div class="skeleton" style="width:60%;height:12px"></div>
+                        </div>
+                    </li>
+                    <li class="skeleton-item">
+                        <div class="skeleton-circle"></div>
+                        <div style="flex:1">
+                            <div class="skeleton"></div>
+                            <div class="skeleton" style="width:60%;height:12px"></div>
+                        </div>
+                    </li>
+                    <li class="skeleton-item">
+                        <div class="skeleton-circle"></div>
+                        <div style="flex:1">
+                            <div class="skeleton"></div>
+                            <div class="skeleton" style="width:60%;height:12px"></div>
+                        </div>
+                    </li>
+                    <li class="skeleton-item">
+                        <div class="skeleton-circle"></div>
+                        <div style="flex:1">
+                            <div class="skeleton"></div>
+                            <div class="skeleton" style="width:60%;height:12px"></div>
+                        </div>
+                    </li>
+                    <li class="skeleton-item">
+                        <div class="skeleton-circle"></div>
+                        <div style="flex:1">
+                            <div class="skeleton"></div>
+                            <div class="skeleton" style="width:60%;height:12px"></div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
         </div>
 
         <div class="main-content">
@@ -375,12 +735,8 @@
             <div class="section input-section">
                 <div class="section-title">📝 URL Input</div>
                 <div class="input-group">
-                    <input 
-                        type="url" 
-                        id="urlInput" 
-                        placeholder="https://kenh14.vn/... or https://saostar.vn/..."
-                        value=""
-                    >
+                    <input type="url" id="urlInput" placeholder="https://kenh14.vn/... or https://saostar.vn/..."
+                        value="">
                     <div class="button-group">
                         <button class="btn-primary" id="scrapeBtn">
                             Lấy Nội Dung
@@ -401,11 +757,7 @@
             <div class="section output-section">
                 <div class="section-title">📄 Nội Dung Gốc</div>
                 <div class="input-group">
-                    <textarea 
-                        id="outputText" 
-                        placeholder="Nội dung bài viết sẽ hiển thị ở đây..."
-                        readonly
-                    ></textarea>
+                    <textarea id="outputText" placeholder="Nội dung bài viết sẽ hiển thị ở đây..." readonly></textarea>
                     <div class="char-count" id="charCount"></div>
                     <div class="button-group">
                         <button class="btn-secondary" id="copyBtn">
@@ -426,11 +778,8 @@
                     <span class="gemini-badge">AI-POWERED</span>
                 </div>
                 <div class="input-group">
-                    <textarea 
-                        id="geminiOutput" 
-                        placeholder="Tóm tắt AI sẽ hiển thị ở đây (3 đoạn ngắn gọn cho TikTok)..."
-                        readonly
-                    ></textarea>
+                    <textarea id="geminiOutput"
+                        placeholder="Tóm tắt AI sẽ hiển thị ở đây (3 đoạn ngắn gọn cho TikTok)..." readonly></textarea>
                     <div class="char-count" id="geminiCount"></div>
                     <button class="btn-secondary" id="copyGeminiBtn">
                         📋 Copy Tóm Tắt
@@ -460,7 +809,7 @@
         const inputStatus = document.getElementById('inputStatus');
         const outputStatus = document.getElementById('outputStatus');
         const charCount = document.getElementById('charCount');
-        
+
         const geminiOutput = document.getElementById('geminiOutput');
         const copyGeminiBtn = document.getElementById('copyGeminiBtn');
         const geminiStatus = document.getElementById('geminiStatus');
@@ -611,7 +960,121 @@
         // Focus on input on load
         window.addEventListener('load', () => {
             urlInput.focus();
+            loadTrending();
         });
+
+        // ===== TRENDING FUNCTIONS =====
+        async function loadTrending() {
+            try {
+                const res = await fetch('/api/trending');
+                const data = await res.json();
+                if (data.success) {
+                    renderPeople(data.people || []);
+                    renderArticles(data.articles || []);
+                    const timeStr = data.updatedAt ? formatUpdatedAt(data.updatedAt) : '--';
+                    document.getElementById('trendingUpdatedAt').textContent = timeStr;
+                    document.getElementById('articlesUpdatedAt').textContent = timeStr;
+                } else {
+                    showTrendingError();
+                }
+            } catch (err) {
+                console.error('Trending fetch error:', err);
+                showTrendingError();
+            }
+        }
+
+        async function refreshTrending() {
+            const btn = document.getElementById('refreshTrendingBtn');
+            btn.classList.add('spinning');
+            btn.disabled = true;
+            // Show skeletons
+            renderSkeletonPeople();
+            renderSkeletonArticles();
+            try {
+                const res = await fetch('/api/trending/refresh', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    renderPeople(data.people || []);
+                    renderArticles(data.articles || []);
+                    const timeStr = data.updatedAt ? formatUpdatedAt(data.updatedAt) : '--';
+                    document.getElementById('trendingUpdatedAt').textContent = timeStr;
+                    document.getElementById('articlesUpdatedAt').textContent = timeStr;
+                } else {
+                    showTrendingError();
+                }
+            } catch (err) {
+                console.error('Refresh error:', err);
+                showTrendingError();
+            } finally {
+                btn.classList.remove('spinning');
+                btn.disabled = false;
+            }
+        }
+
+        function renderPeople(people) {
+            const list = document.getElementById('peopleList');
+            if (!people || people.filter(p => p).length === 0) {
+                list.innerHTML = '<li style="padding:12px;color:var(--text-secondary);font-size:0.9em;">Chưa có dữ liệu nhân vật trending.</li>';
+                return;
+            }
+            const rankClasses = ['rank-1', 'rank-2', 'rank-3', 'rank-4', 'rank-5'];
+            const medals = ['🥇', '🥈', '🥉', '4', '5'];
+            list.innerHTML = people
+                .filter(p => p)
+                .slice(0, 5)
+                .map((name, i) => `
+                    <li class="people-item">
+                        <div class="rank-badge ${rankClasses[i]}">${medals[i]}</div>
+                        <span class="people-name">${escapeHtml(name)}</span>
+                    </li>`).join('');
+        }
+
+        function renderArticles(articles) {
+            const list = document.getElementById('articlesList');
+            if (!articles || articles.length === 0) {
+                list.innerHTML = '<li style="padding:12px;color:var(--text-secondary);font-size:0.9em;">Chưa tìm được bài viết liên quan. Thử Refresh sau ít phút.</li>';
+                return;
+            }
+            list.innerHTML = articles.slice(0, 5).map((a, i) => `
+                <li class="article-item">
+                    <div class="article-num">${i + 1}</div>
+                    <div class="article-info">
+                        <a class="article-link" href="${escapeHtml(a.url)}" target="_blank" rel="noopener">${escapeHtml(a.title)}</a>
+                        <div class="article-source">📌 ${escapeHtml(a.source || '')}</div>
+                    </div>
+                </li>`).join('');
+        }
+
+        function renderSkeletonPeople() {
+            const list = document.getElementById('peopleList');
+            list.innerHTML = Array(5).fill(`<li class="skeleton-item"><div class="skeleton-circle"></div><div class="skeleton" style="flex:1"></div></li>`).join('');
+        }
+
+        function renderSkeletonArticles() {
+            const list = document.getElementById('articlesList');
+            list.innerHTML = Array(5).fill(`<li class="skeleton-item"><div class="skeleton-circle"></div><div style="flex:1"><div class="skeleton"></div><div class="skeleton" style="width:60%;height:12px"></div></div></li>`).join('');
+        }
+
+        function showTrendingError() {
+            document.getElementById('peopleList').innerHTML = '<li style="padding:12px;color:var(--error);font-size:0.9em;">❌ Lỗi tải dữ liệu trending. Vui lòng thử lại.</li>';
+            document.getElementById('articlesList').innerHTML = '<li style="padding:12px;color:var(--error);font-size:0.9em;">❌ Lỗi tải bài viết. Vui lòng thử lại.</li>';
+        }
+
+        function formatUpdatedAt(isoStr) {
+            try {
+                const d = new Date(isoStr);
+                return `Cập nhật: ${d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} ${d.toLocaleDateString('vi-VN')}`;
+            } catch { return isoStr; }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // Auto-refresh every 15 minutes
+        setInterval(loadTrending, 15 * 60 * 1000);
     </script>
 </body>
+
 </html>
