@@ -1,6 +1,7 @@
 const cheerio = require('cheerio');
 const { safeFetch, extractArticleDate } = require('./scraper');
 const { generateSummaryWithRetry } = require('./gemini');
+const { getPeopleStats } = require('./stats');
 
 // In-memory cache
 let trendingCache = {
@@ -201,13 +202,37 @@ async function updateTrendingData() {
         const top5People = await analyzeTop5PeopleWithGemini(allHeadlines);
         console.log('🌟 Top 5 nhân vật:', top5People);
 
+        // Fetch stats cho mỗi nhân vật
+        const peopleWithStats = [];
+        for (const person of top5People) {
+            if (person) {
+                const stats = await getPeopleStats([person]);
+                if (stats.length > 0) {
+                    peopleWithStats.push({
+                        name: person,
+                        stats: stats[0].stats
+                    });
+                } else {
+                    peopleWithStats.push({
+                        name: person,
+                        stats: {
+                            google: { searches: 0, trends: 0 },
+                            tiktok: { views: 0, likes: 0, comments: 0 },
+                            facebook: { views: 0, likes: 0, comments: 0 }
+                        }
+                    });
+                }
+            }
+        }
+        console.log('📊 Đã fetch stats cho các nhân vật');
+
         // Tìm top 5 bài viết liên quan
         const top5Articles = await fetchTop5Articles(top5People);
         console.log(`📰 Top 5 articles: ${top5Articles.length} found`);
 
         // Cập nhật cache
         trendingCache = {
-            people: top5People,
+            people: peopleWithStats,
             articles: top5Articles,
             updatedAt: new Date().toISOString()
         };

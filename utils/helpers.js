@@ -18,7 +18,7 @@ function getErrorMessage(error) {
 
 function isRateLimitOrHighDemandError(error) {
     const message = (error.message || '').toLowerCase();
-    const status = error.response?.status;
+    const status = error.response && error.response.status;
     return (
         status === 429 ||
         status === 503 ||
