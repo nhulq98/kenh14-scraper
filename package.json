@@ -25,7 +25,6 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.14",
-    "google-trends-api": "^4.9.2",
-    "tiktok-scraper": "^1.4.95"
+    "google-trends-api": "^4.9.2"
   }
 }

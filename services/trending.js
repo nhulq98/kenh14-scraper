@@ -10,22 +10,6 @@ let trendingCache = {
     updatedAt: null
 };
 
-// Lấy top trending searches từ Google Trends RSS (VN)
-async function fetchGoogleTrendsVN() {
-    const url = 'https://trends.google.com/trending/rss?geo=VN';
-    const xml = await safeFetch(url);
-    if (!xml) return [];
-
-    const $ = cheerio.load(xml, { xmlMode: true });
-    const titles = [];
-    $('item title').each((i, el) => {
-        const t = $(el).text().trim();
-        if (t) titles.push(t);
-    });
-    console.log(`📊 Google Trends VN: ${titles.slice(0, 10).join(', ')}`);
-    return titles.slice(0, 30);
-}
-
 // Scrape tiêu đề bài viết từ Kenh14 star page
 async function scrapeKenh14Headlines() {
     const html = await safeFetch('https://kenh14.vn/star.chn');
@@ -149,49 +133,56 @@ async function scrapeArticlesFromSource(sourceUrl, sourceName, people) {
     return filtered.slice(0, 20);
 }
 
-// Thu thập top 5 bài viết liên quan đến các nhân vật hot
-async function fetchTop5Articles(people) {
+// Lấy 1 bài báo cho mỗi người, không trùng bài báo
+async function fetchArticlesForPeople(people) {
     const sources = [
         { url: 'https://kenh14.vn/star.chn', name: 'Kenh14' },
-        { url: 'https://www.saostar.vn/giai-tri/', name: 'Saostar' },
-        { url: 'https://www.theanh28entertainment.com/', name: 'Theanh28' },
-        { url: 'https://beatvn.com/', name: 'BeatVN' },
-        { url: 'https://www.yan.vn/entertainment/', name: 'YAN News' }
+        { url: 'https://www.saostar.vn/giai-tri/', name: 'Saostar' }
     ];
 
-    let allArticles = [];
+    const results = [];
+    const usedUrls = new Set();
 
-    for (const src of sources) {
-        if (allArticles.length >= 5) break;
-        const articles = await scrapeArticlesFromSource(src.url, src.name, people);
-        allArticles = [...allArticles, ...articles];
-        console.log(`📄 ${src.name}: ${articles.length} matched articles`);
+    // Cho mỗi người, tìm 1 bài báo từ 2 nguồn
+    for (const person of people) {
+        if (!person) continue;
+        let found = false;
+
+        for (const src of sources) {
+            if (found) break;
+            const articles = await scrapeArticlesFromSource(src.url, src.name, [person]);
+            
+            // Lấy bài báo đầu tiên chưa được dùng
+            for (const article of articles) {
+                if (!usedUrls.has(article.url)) {
+                    results.push(article);
+                    usedUrls.add(article.url);
+                    found = true;
+                    console.log(`📄 ${person}: found article from ${src.name}`);
+                    break;
+                }
+            }
+        }
+
+        if (!found) {
+            console.log(`⚠️ ${person}: không tìm được bài báo`);
+        }
     }
 
-    // Dedupe by URL
-    const seen = new Set();
-    const unique = allArticles.filter(a => {
-        if (seen.has(a.url)) return false;
-        seen.add(a.url);
-        return true;
-    });
-
-    return unique.slice(0, 5);
+    return results;
 }
 
 // Hàm chính: cập nhật toàn bộ trending data
 async function updateTrendingData() {
     console.log('🔄 Bắt đầu cập nhật trending data...');
     try {
-        // Thu thập dữ liệu song song
-        const [googleTrends, kenh14Headlines, saostarHeadlines] = await Promise.all([
-            fetchGoogleTrendsVN(),
+        // Thu thập dữ liệu song song từ Kenh14 và Saostar
+        const [kenh14Headlines, saostarHeadlines] = await Promise.all([
             scrapeKenh14Headlines(),
             scrapeSaostarHeadlines()
         ]);
 
         const allHeadlines = [
-            ...googleTrends,
             ...kenh14Headlines,
             ...saostarHeadlines
         ];
@@ -216,8 +207,6 @@ async function updateTrendingData() {
                     peopleWithStats.push({
                         name: person,
                         stats: {
-                            google: { searches: 0, trends: 0 },
-                            tiktok: { views: 0, likes: 0, comments: 0 },
                             facebook: { views: 0, likes: 0, comments: 0 }
                         }
                     });
@@ -226,14 +215,14 @@ async function updateTrendingData() {
         }
         console.log('📊 Đã fetch stats cho các nhân vật');
 
-        // Tìm top 5 bài viết liên quan
-        const top5Articles = await fetchTop5Articles(top5People);
-        console.log(`📰 Top 5 articles: ${top5Articles.length} found`);
+        // Tìm đúng 1 bài báo cho mỗi người
+        const articles = await fetchArticlesForPeople(top5People);
+        console.log(`📰 Tìm được ${articles.length} bài báo cho 5 nhân vật`);
 
         // Cập nhật cache
         trendingCache = {
             people: peopleWithStats,
-            articles: top5Articles,
+            articles: articles,
             updatedAt: new Date().toISOString()
         };
 
@@ -251,7 +240,6 @@ function getTrendingCache() {
 module.exports = {
     updateTrendingData,
     getTrendingCache,
-    fetchGoogleTrendsVN,
     scrapeKenh14Headlines,
     scrapeSaostarHeadlines
 };

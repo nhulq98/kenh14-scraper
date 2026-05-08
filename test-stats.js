@@ -40,29 +40,11 @@ async function testStats() {
     if (googleKey) {
         log('green', '   ✅ GOOGLE_API_KEY configured');
     } else {
-        log('yellow', '   ⚠️  GOOGLE_API_KEY not set (using free scraping)');
+        log('yellow', '   ⚠️  GOOGLE_API_KEY not set (optional)');
     }
 
-    // Test 2: Test Google Stats
-    log('cyan', '\n2️⃣  Testing Google Stats...');
-    try {
-        const googleStats = await stats.getGoogleStats('Taylor Swift');
-        log('green', `   ✅ Google stats:`, JSON.stringify(googleStats, null, 2));
-    } catch (err) {
-        log('red', `   ❌ Google error:`, err.message);
-    }
-
-    // Test 3: Test TikTok Stats
-    log('cyan', '\n3️⃣  Testing TikTok Stats...');
-    try {
-        const tiktokStats = await stats.getTikTokStats('BTS');
-        log('green', `   ✅ TikTok stats:`, JSON.stringify(tiktokStats, null, 2));
-    } catch (err) {
-        log('red', `   ❌ TikTok error:`, err.message);
-    }
-
-    // Test 4: Test Facebook Stats
-    log('cyan', '\n4️⃣  Testing Facebook Stats...');
+    // Test 2: Test Facebook Stats
+    log('cyan', '\n2️⃣  Testing Facebook Stats...');
     try {
         const fbStats = await stats.getFacebookStats('Dua Lipa');
         log('green', `   ✅ Facebook stats:`, JSON.stringify(fbStats, null, 2));
@@ -70,8 +52,8 @@ async function testStats() {
         log('red', `   ❌ Facebook error:`, err.message);
     }
 
-    // Test 5: Test Person Stats (all platforms)
-    log('cyan', '\n5️⃣  Testing Full Person Stats...');
+    // Test 3: Test Person Stats (Facebook only)
+    log('cyan', '\n3️⃣  Testing Full Person Stats...');
     try {
         const personStats = await stats.getPersonStats('Ngô Thanh Vân');
         log('green', `   ✅ Person stats retrieved:`, JSON.stringify(personStats, null, 2));
@@ -79,8 +61,8 @@ async function testStats() {
         log('red', `   ❌ Person stats error:`, err.message);
     }
 
-    // Test 6: Test Batch Stats
-    log('cyan', '\n6️⃣  Testing Batch Stats (Multiple People)...');
+    // Test 4: Test Batch Stats
+    log('cyan', '\n4️⃣  Testing Batch Stats (Multiple People)...');
     try {
         const people = ['Ngô Thanh Vân', 'Phương Oanh', 'Vĩnh Đạm'];
         const batchStats = await stats.getPeopleStats(people);
@@ -95,8 +77,8 @@ async function testStats() {
     // Summary
     log('blue', '\n=== Summary ===');
     log('cyan', 'Status: All tests completed');
-    log('yellow', 'Note: Mock data used for unconfigured platforms');
-    log('yellow', 'Next: Add API tokens to .env for real data\n');
+    log('yellow', 'Note: Now collecting Facebook stats only');
+    log('yellow', 'Configure FB_ACCESS_TOKEN in .env for real data\n');
 }
 
 // Run tests

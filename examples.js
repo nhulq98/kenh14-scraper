@@ -14,10 +14,9 @@ async function example1() {
     const personStats = await stats.getPersonStats('Taylor Swift');
     
     console.log('Taylor Swift Stats:');
-    console.log('Google Searches:', personStats.google.searches.toLocaleString());
-    console.log('TikTok Views:', personStats.tiktok.views.toLocaleString());
-    console.log('TikTok Likes:', personStats.tiktok.likes.toLocaleString());
     console.log('Facebook Views:', personStats.facebook.views.toLocaleString());
+    console.log('Facebook Likes:', personStats.facebook.likes.toLocaleString());
+    console.log('Facebook Comments:', personStats.facebook.comments.toLocaleString());
 }
 
 // Example 2: Get stats for multiple people
@@ -29,35 +28,21 @@ async function example2() {
     
     results.forEach(item => {
         console.log(`\n${item.person}:`);
-        console.log(`  Google Searches: ${(item.stats.google.searches / 1000).toFixed(1)}K`);
-        console.log(`  TikTok Views: ${(item.stats.tiktok.views / 1000000).toFixed(1)}M`);
-        console.log(`  Facebook Likes: ${(item.stats.facebook.likes / 1000).toFixed(1)}K`);
+        console.log(`  Views: ${(item.stats.facebook.views / 1000000).toFixed(1)}M`);
+        console.log(`  Likes: ${(item.stats.facebook.likes / 1000).toFixed(1)}K`);
+        console.log(`  Comments: ${(item.stats.facebook.comments / 1000).toFixed(1)}K`);
     });
 }
 
-// Example 3: Individual platform stats
+// Example 3: Facebook stats
 async function example3() {
-    console.log('\n📊 Example 3: Individual Platform Stats\n');
+    console.log('\n📊 Example 3: Facebook Stats\n');
     
     const personName = 'BTS';
     
-    const [googleStats, tiktokStats, facebookStats] = await Promise.all([
-        stats.getGoogleStats(personName),
-        stats.getTikTokStats(personName),
-        stats.getFacebookStats(personName)
-    ]);
+    const facebookStats = await stats.getFacebookStats(personName);
     
-    console.log(`${personName} Stats by Platform:`);
-    console.log('\n🔍 Google:');
-    console.log('  Searches:', googleStats.searches.toLocaleString());
-    console.log('  Trends:', googleStats.trends);
-    
-    console.log('\n🎵 TikTok:');
-    console.log('  Views:', tiktokStats.views.toLocaleString());
-    console.log('  Likes:', tiktokStats.likes.toLocaleString());
-    console.log('  Comments:', tiktokStats.comments.toLocaleString());
-    
-    console.log('\n📘 Facebook:');
+    console.log(`${personName} Facebook Stats:`);
     console.log('  Views:', facebookStats.views.toLocaleString());
     console.log('  Likes:', facebookStats.likes.toLocaleString());
     console.log('  Comments:', facebookStats.comments.toLocaleString());
@@ -99,13 +84,7 @@ async function example5() {
     
     results.forEach((item, index) => {
         console.log(`\n${index + 1}. ${item.person}`);
-        console.log('┌─ 🔍 Google');
-        console.log(`│  Search: ${formatNumber(item.stats.google.searches)}`);
-        console.log('├─ 🎵 TikTok');
-        console.log(`│  Views: ${formatNumber(item.stats.tiktok.views)}`);
-        console.log(`│  Likes: ${formatNumber(item.stats.tiktok.likes)}`);
-        console.log(`│  Comments: ${formatNumber(item.stats.tiktok.comments)}`);
-        console.log('└─ 📘 Facebook');
+        console.log('📘 Facebook');
         console.log(`   Views: ${formatNumber(item.stats.facebook.views)}`);
         console.log(`   Likes: ${formatNumber(item.stats.facebook.likes)}`);
         console.log(`   Comments: ${formatNumber(item.stats.facebook.comments)}`);

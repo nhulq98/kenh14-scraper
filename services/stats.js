@@ -1,128 +1,5 @@
 // Stats fetcher service - Lấy số liệu từ các platform
 const axios = require('axios');
-const cheerio = require('cheerio');
-
-// Google Trends - Web scraping approach (không cần API key)
-async function getGoogleStats(personName) {
-    try {
-        const url = `https://trends.google.com/trends/explore?q=${encodeURIComponent(personName)}&geo=VN`;
-        
-        // Alternative: Use google-trends-api package if installed
-        try {
-            const googleTrends = require('google-trends-api');
-            const results = await googleTrends.interestByRegion({
-                keyword: personName,
-                startTime: new Date(Date.now() - 48*60*60*1000), // Last 48h
-                geo: 'VN',
-                resolution: 'CITY'
-            });
-            
-            if (results && results.default && results.default.length > 0) {
-                const totalSearches = results.default.reduce((sum, item) => sum + (item.value || 0), 0);
-                return {
-                    searches: Math.ceil(totalSearches * 1000), // Estimate based on relative interest
-                    trends: results.default[0].value || 0
-                };
-            }
-        } catch (e) {
-            // google-trends-api not installed, use mock
-        }
-        
-        // Fallback: Return estimated data
-        return {
-            searches: Math.floor(Math.random() * 100000) + 10000,
-            trends: Math.floor(Math.random() * 10) + 1
-        };
-    } catch (err) {
-        console.warn(`⚠️ Google stats error for "${personName}":`, err.message);
-        return {
-            searches: 0,
-            trends: 0
-        };
-    }
-}
-
-// TikTok stats - Using unofficial TikTok API
-async function getTikTokStats(personName) {
-    try {
-        // Method 1: Try using TikTok API if available
-        const searchUrl = `https://www.tiktok.com/api/search/general/full/?keyword=${encodeURIComponent(personName)}&scene=web_general`;
-        
-        try {
-            const response = await axios.get(searchUrl, {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    'Accept': 'application/json',
-                    'Referer': 'https://www.tiktok.com/search/'
-                },
-                timeout: 10000
-            });
-            
-            if (response.data && response.data.data) {
-                const videoList = response.data.data.videos || [];
-                
-                if (videoList.length > 0) {
-                    // Aggregate stats from top videos
-                    let totalViews = 0;
-                    let totalLikes = 0;
-                    let totalComments = 0;
-                    
-                    videoList.slice(0, 10).forEach(video => {
-                        const stats = video.stats || {};
-                        totalViews += stats.playCount || 0;
-                        totalLikes += stats.diggCount || 0;
-                        totalComments += stats.commentCount || 0;
-                    });
-                    
-                    return {
-                        views: totalViews,
-                        likes: totalLikes,
-                        comments: totalComments
-                    };
-                }
-            }
-        } catch (err) {
-            console.warn(`⚠️ TikTok API error for "${personName}":`, err.message);
-        }
-        
-        // Method 2: Try hashtag search
-        try {
-            const hashtagUrl = `https://www.tiktok.com/api/discover/search/?keyword=${encodeURIComponent(personName)}&type=1`;
-            const response = await axios.get(hashtagUrl, {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                },
-                timeout: 10000
-            });
-            
-            if (response.data && response.data.hashtags && response.data.hashtags.length > 0) {
-                const hashtag = response.data.hashtags[0];
-                const stats = hashtag.stats || {};
-                return {
-                    views: (stats.videoCount || 0) * 50000,
-                    likes: (stats.videoCount || 0) * 5000,
-                    comments: (stats.videoCount || 0) * 500
-                };
-            }
-        } catch (err) {
-            console.warn(`⚠️ TikTok hashtag error for "${personName}":`, err.message);
-        }
-        
-        // Fallback: Mock data
-        return {
-            views: Math.floor(Math.random() * 10000000) + 100000,
-            likes: Math.floor(Math.random() * 500000) + 10000,
-            comments: Math.floor(Math.random() * 50000) + 1000
-        };
-    } catch (err) {
-        console.warn(`⚠️ TikTok stats error for "${personName}":`, err.message);
-        return {
-            views: 0,
-            likes: 0,
-            comments: 0
-        };
-    }
-}
 
 // Facebook stats - Using Graph API
 async function getFacebookStats(personName) {
@@ -205,24 +82,12 @@ async function getPersonStats(personName) {
 
     try {
         console.log(`🔄 Fetching fresh stats for "${personName}"...`);
-        const [googleStats, tiktokStats, facebookStats] = await Promise.all([
-            getGoogleStats(personName).catch(e => {
-                console.error(`Error fetching Google stats: ${e.message}`);
-                return { searches: 0, trends: 0 };
-            }),
-            getTikTokStats(personName).catch(e => {
-                console.error(`Error fetching TikTok stats: ${e.message}`);
-                return { views: 0, likes: 0, comments: 0 };
-            }),
-            getFacebookStats(personName).catch(e => {
-                console.error(`Error fetching Facebook stats: ${e.message}`);
-                return { views: 0, likes: 0, comments: 0 };
-            })
-        ]);
+        const facebookStats = await getFacebookStats(personName).catch(e => {
+            console.error(`Error fetching Facebook stats: ${e.message}`);
+            return { views: 0, likes: 0, comments: 0 };
+        });
 
         const stats = {
-            google: googleStats,
-            tiktok: tiktokStats,
             facebook: facebookStats
         };
 
@@ -233,8 +98,6 @@ async function getPersonStats(personName) {
     } catch (err) {
         console.warn(`❌ Failed to fetch stats for "${personName}":`, err.message);
         return {
-            google: { searches: 0, trends: 0 },
-            tiktok: { views: 0, likes: 0, comments: 0 },
             facebook: { views: 0, likes: 0, comments: 0 }
         };
     }
@@ -257,8 +120,6 @@ async function getPeopleStats(people) {
 }
 
 module.exports = {
-    getGoogleStats,
-    getTikTokStats,
     getFacebookStats,
     getPersonStats,
     getPeopleStats

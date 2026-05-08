@@ -638,7 +638,7 @@
 
         .stats-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 10px;
         }
 
@@ -648,14 +648,6 @@
             border-radius: 8px;
             border-left: 3px solid #999;
             text-align: center;
-        }
-
-        .stat-platform.google {
-            border-left-color: #4285F4;
-        }
-
-        .stat-platform.tiktok {
-            border-left-color: #000;
         }
 
         .stat-platform.facebook {
@@ -1035,7 +1027,7 @@
         // Focus on input on load
         window.addEventListener('load', () => {
             urlInput.focus();
-            loadTrending();
+            // loadTrending() - Removed: only runs at 9 AM daily or manual refresh
         });
 
         // ===== TRENDING FUNCTIONS =====
@@ -1100,12 +1092,8 @@
                 .slice(0, 5)
                 .map((item, i) => {
                     const name = item.name || item;
-                    const stats = item.stats || { google: {}, tiktok: {}, facebook: {} };
+                    const stats = item.stats || { facebook: {} };
                     
-                    const googleSearches = formatNumber(stats.google?.searches || 0);
-                    const tiktokViews = formatNumber(stats.tiktok?.views || 0);
-                    const tiktokLikes = formatNumber(stats.tiktok?.likes || 0);
-                    const tiktokComments = formatNumber(stats.tiktok?.comments || 0);
                     const fbViews = formatNumber(stats.facebook?.views || 0);
                     const fbLikes = formatNumber(stats.facebook?.likes || 0);
                     const fbComments = formatNumber(stats.facebook?.comments || 0);
@@ -1117,28 +1105,6 @@
                             <span class="people-name">${escapeHtml(name)}</span>
                             <div class="people-stats-card">
                                 <div class="stats-grid">
-                                    <div class="stat-platform google">
-                                        <div class="stat-platform-name">🔍 Google</div>
-                                        <div class="stat-item">
-                                            <span class="stat-label">Search</span>
-                                            <span class="stat-value">${googleSearches}</span>
-                                        </div>
-                                    </div>
-                                    <div class="stat-platform tiktok">
-                                        <div class="stat-platform-name">🎵 TikTok</div>
-                                        <div class="stat-item">
-                                            <span class="stat-label">View</span>
-                                            <span class="stat-value large">${tiktokViews}</span>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span class="stat-label">❤️</span>
-                                            <span class="stat-value">${tiktokLikes}</span>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span class="stat-label">💬</span>
-                                            <span class="stat-value">${tiktokComments}</span>
-                                        </div>
-                                    </div>
                                     <div class="stat-platform facebook">
                                         <div class="stat-platform-name">📘 Facebook</div>
                                         <div class="stat-item">
@@ -1211,8 +1177,8 @@
             return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
-        // Auto-refresh every 15 minutes
-        setInterval(loadTrending, 15 * 60 * 1000);
+        // Auto-refresh removed - only runs at 9 AM daily or manual refresh
+        // setInterval(loadTrending, 15 * 60 * 1000);
     </script>
 </body>
 
