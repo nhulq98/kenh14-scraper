@@ -1,57 +1,6 @@
 // Stats fetcher service - Lấy số liệu từ các platform
 const axios = require('axios');
 
-// Facebook stats - Using Graph API
-async function getFacebookStats(personName) {
-    try {
-        const fbAccessToken = process.env.FB_ACCESS_TOKEN;
-        
-        if (!fbAccessToken) {
-            console.warn('⚠️ FB_ACCESS_TOKEN not configured');
-            return {
-                views: Math.floor(Math.random() * 1000000) + 50000,
-                likes: Math.floor(Math.random() * 100000) + 5000,
-                comments: Math.floor(Math.random() * 10000) + 500
-            };
-        }
-        
-        // Search for public pages mentioning the person
-        const graphUrl = `https://graph.facebook.com/v18.0/search?q=${encodeURIComponent(personName)}&type=page&fields=name,engagement.summary(total_count),fan_count&access_token=${fbAccessToken}`;
-        
-        const response = await axios.get(graphUrl, {
-            timeout: 10000
-        });
-        
-        if (response.data && response.data.data && response.data.data.length > 0) {
-            const page = response.data.data[0];
-            const fanCount = page.fan_count || 0;
-            const engagement = page.engagement || {};
-            const engagementTotal = (engagement.summary && engagement.summary.total_count) || 0;
-            
-            return {
-                views: fanCount * Math.random() * 10 + fanCount,
-                likes: engagementTotal || fanCount * 0.1,
-                comments: Math.floor(engagementTotal * 0.15) || Math.floor(fanCount * 0.02)
-            };
-        }
-        
-        // Fallback: Mock data
-        return {
-            views: Math.floor(Math.random() * 1000000) + 50000,
-            likes: Math.floor(Math.random() * 100000) + 5000,
-            comments: Math.floor(Math.random() * 10000) + 500
-        };
-    } catch (err) {
-        console.warn(`⚠️ Facebook stats error for "${personName}":`, err.message);
-        return {
-            views: 0,
-            likes: 0,
-            comments: 0
-        };
-    }
-}
-
-
 // Cache for stats (30 minute TTL)
 const statsCache = new Map();
 const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
@@ -82,14 +31,8 @@ async function getPersonStats(personName) {
 
     try {
         console.log(`🔄 Fetching fresh stats for "${personName}"...`);
-        const facebookStats = await getFacebookStats(personName).catch(e => {
-            console.error(`Error fetching Facebook stats: ${e.message}`);
-            return { views: 0, likes: 0, comments: 0 };
-        });
 
-        const stats = {
-            facebook: facebookStats
-        };
+        const stats = {};
 
         // Cache the results
         setCachedStats(personName, stats);
@@ -97,9 +40,7 @@ async function getPersonStats(personName) {
         return stats;
     } catch (err) {
         console.warn(`❌ Failed to fetch stats for "${personName}":`, err.message);
-        return {
-            facebook: { views: 0, likes: 0, comments: 0 }
-        };
+        return {};
     }
 }
 
@@ -120,7 +61,6 @@ async function getPeopleStats(people) {
 }
 
 module.exports = {
-    getFacebookStats,
     getPersonStats,
     getPeopleStats
 };

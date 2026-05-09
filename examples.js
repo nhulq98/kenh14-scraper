@@ -14,9 +14,7 @@ async function example1() {
     const personStats = await stats.getPersonStats('Taylor Swift');
     
     console.log('Taylor Swift Stats:');
-    console.log('Facebook Views:', personStats.facebook.views.toLocaleString());
-    console.log('Facebook Likes:', personStats.facebook.likes.toLocaleString());
-    console.log('Facebook Comments:', personStats.facebook.comments.toLocaleString());
+    console.log(JSON.stringify(personStats, null, 2));
 }
 
 // Example 2: Get stats for multiple people
@@ -28,24 +26,20 @@ async function example2() {
     
     results.forEach(item => {
         console.log(`\n${item.person}:`);
-        console.log(`  Views: ${(item.stats.facebook.views / 1000000).toFixed(1)}M`);
-        console.log(`  Likes: ${(item.stats.facebook.likes / 1000).toFixed(1)}K`);
-        console.log(`  Comments: ${(item.stats.facebook.comments / 1000).toFixed(1)}K`);
+        console.log(JSON.stringify(item.stats, null, 2));
     });
 }
 
-// Example 3: Facebook stats
+// Example 3: Stats caching
 async function example3() {
-    console.log('\n📊 Example 3: Facebook Stats\n');
+    console.log('\n📊 Example 3: Stats Caching\n');
     
     const personName = 'BTS';
     
-    const facebookStats = await stats.getFacebookStats(personName);
+    const stats1 = await stats.getPersonStats(personName);
     
-    console.log(`${personName} Facebook Stats:`);
-    console.log('  Views:', facebookStats.views.toLocaleString());
-    console.log('  Likes:', facebookStats.likes.toLocaleString());
-    console.log('  Comments:', facebookStats.comments.toLocaleString());
+    console.log(`${personName} Stats:`);
+    console.log(JSON.stringify(stats1, null, 2));
 }
 
 // Example 4: Caching demonstration
@@ -84,10 +78,7 @@ async function example5() {
     
     results.forEach((item, index) => {
         console.log(`\n${index + 1}. ${item.person}`);
-        console.log('📘 Facebook');
-        console.log(`   Views: ${formatNumber(item.stats.facebook.views)}`);
-        console.log(`   Likes: ${formatNumber(item.stats.facebook.likes)}`);
-        console.log(`   Comments: ${formatNumber(item.stats.facebook.comments)}`);
+        console.log(JSON.stringify(item.stats, null, 2));
     });
 }
 

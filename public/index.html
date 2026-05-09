@@ -627,14 +627,6 @@
         }
 
         /* ===== PEOPLE STATS CARD ===== */
-        .people-stats-card {
-            padding: 14px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
-            border: 1px solid #e8e8e8;
-            margin-top: 8px;
-            font-size: 0.8em;
-        }
 
         .stats-grid {
             display: grid;
@@ -650,9 +642,7 @@
             text-align: center;
         }
 
-        .stat-platform.facebook {
-            border-left-color: #1877F2;
-        }
+
 
         .stat-platform-name {
             font-weight: 700;
@@ -1092,36 +1082,14 @@
                 .slice(0, 5)
                 .map((item, i) => {
                     const name = item.name || item;
-                    const stats = item.stats || { facebook: {} };
-                    
-                    const fbViews = formatNumber(stats.facebook?.views || 0);
-                    const fbLikes = formatNumber(stats.facebook?.likes || 0);
-                    const fbComments = formatNumber(stats.facebook?.comments || 0);
+                    const stats = item.stats || {};
                     
                     return `
                     <li class="people-item">
                         <div class="rank-badge ${rankClasses[i]}">${medals[i]}</div>
                         <div style="flex:1;">
                             <span class="people-name">${escapeHtml(name)}</span>
-                            <div class="people-stats-card">
-                                <div class="stats-grid">
-                                    <div class="stat-platform facebook">
-                                        <div class="stat-platform-name">📘 Facebook</div>
-                                        <div class="stat-item">
-                                            <span class="stat-label">View</span>
-                                            <span class="stat-value large">${fbViews}</span>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span class="stat-label">👍</span>
-                                            <span class="stat-value">${fbLikes}</span>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span class="stat-label">💬</span>
-                                            <span class="stat-value">${fbComments}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            
                         </div>
                     </li>`
                 }).join('');
