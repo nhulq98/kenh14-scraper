@@ -586,6 +586,32 @@
             margin-top: 3px;
         }
 
+        .article-copy-btn {
+            flex-shrink: 0;
+            background: var(--primary);
+            border: none;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75em;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        .article-copy-btn:hover {
+            background: var(--primary-dark, #1a73e8);
+            transform: scale(1.05);
+        }
+
+        .article-copy-btn:active {
+            transform: scale(0.95);
+        }
+
         /* Skeleton loader */
         .skeleton {
             background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
@@ -741,7 +767,7 @@
             <!-- Top 5 Articles -->
             <div class="trending-section">
                 <div class="trending-header">
-                    <div class="trending-title">📰 Top 5 Bài Viết Trending</div>
+                    <div class="trending-title">📰 Top 5 Bài Viết Trending 48h Qua</div>
                     <div class="trending-meta">
                         <span id="articlesUpdatedAt">--</span>
                     </div>
@@ -1074,12 +1100,12 @@
                 list.innerHTML = '<li style="padding:12px;color:var(--text-secondary);font-size:0.9em;">Chưa có dữ liệu nhân vật trending.</li>';
                 return;
             }
-            const rankClasses = ['rank-1', 'rank-2', 'rank-3', 'rank-4', 'rank-5'];
-            const medals = ['🥇', '🥈', '🥉', '4', '5'];
+            const rankClasses = ['rank-1', 'rank-2', 'rank-3', 'rank-4', 'rank-5', 'rank-6', 'rank-7'];
+            const medals = ['🥇', '🥈', '🥉', '4', '5', '6', '7'];
             
             list.innerHTML = people
                 .filter(p => p && (p.name || p))
-                .slice(0, 5)
+                .slice(0, 7)
                 .map((item, i) => {
                     const name = item.name || item;
                     const stats = item.stats || {};
@@ -1108,13 +1134,16 @@
                 list.innerHTML = '<li style="padding:12px;color:var(--text-secondary);font-size:0.9em;">Chưa tìm được bài viết liên quan. Thử Refresh sau ít phút.</li>';
                 return;
             }
-            list.innerHTML = articles.slice(0, 5).map((a, i) => `
+            list.innerHTML = articles.slice(0, 7).map((a, i) => `
                 <li class="article-item">
                     <div class="article-num">${i + 1}</div>
                     <div class="article-info">
                         <a class="article-link" href="${escapeHtml(a.url)}" target="_blank" rel="noopener">${escapeHtml(a.title)}</a>
                         <div class="article-source">📌 ${escapeHtml(a.source || '')}</div>
                     </div>
+                    <button class="article-copy-btn" onclick="copyArticleLink('${escapeHtml(a.url)}', this)" title="Copy link">
+                        📋 Copy
+                    </button>
                 </li>`).join('');
         }
 
@@ -1138,6 +1167,20 @@
                 const d = new Date(isoStr);
                 return `Cập nhật: ${d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} ${d.toLocaleDateString('vi-VN')}`;
             } catch { return isoStr; }
+        }
+
+        function copyArticleLink(url, button) {
+            navigator.clipboard.writeText(url).then(() => {
+                const originalText = button.innerHTML;
+                button.innerHTML = '✅ Đã copy!';
+                button.style.background = '#34a853';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.style.background = 'var(--primary)';
+                }, 2000);
+            }).catch(() => {
+                alert('Không thể copy link. Vui lòng thử lại.');
+            });
         }
 
         function escapeHtml(str) {

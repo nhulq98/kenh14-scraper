@@ -46,23 +46,23 @@ async function scrapeSaostarHeadlines() {
     return titles.slice(0, 30);
 }
 
-// Dùng Gemini phân tích danh sách tiêu đề và trả về top 5 tên nhân vật
-async function analyzeTop5PeopleWithGemini(allHeadlines) {
+// Dùng Gemini phân tích danh sách tiêu đề và trả về top 7 tên nhân vật
+async function analyzeTop7PeopleWithGemini(allHeadlines) {
     if (allHeadlines.length === 0) {
-        return ['Không có dữ liệu', '', '', '', ''];
+        return ['Không có dữ liệu', '', '', '', '', '', ''];
     }
 
     const joined = allHeadlines.slice(0, 80).join('\n');
     const prompt = `Bạn là chuyên gia phân tích xu hướng mạng xã hội.
 Dưới đây là danh sách các tiêu đề bài báo giải trí và trending searches Việt Nam thu thập trong 48h qua.
 
-Nhiệm vụ: Phân tích và trả về ĐÚNG 5 tên nhân vật (ca sĩ, diễn viên, người nổi tiếng VN hoặc quốc tế) đang được nhắc đến nhiều nhất / đang hot nhất.
+Nhiệm vụ: Phân tích và trả về ĐÚNG 7 tên nhân vật (ca sĩ, diễn viên, người nổi tiếng VN hoặc quốc tế) đang được nhắc đến nhiều nhất / đang hot nhất.
 
 Quy tắc:
-- Chỉ trả về MỘT JSON array, ví dụ: ["Tên 1", "Tên 2", "Tên 3", "Tên 4", "Tên 5"]
-- Đúng 5 phần tử, không nhiều hơn không ít hơn
+- Chỉ trả về MỘT JSON array, ví dụ: ["Tên 1", "Tên 2", "Tên 3", "Tên 4", "Tên 5", "Tên 6", "Tên 7"]
+- Đúng 7 phần tử, không nhiều hơn không ít hơn
 - Ưu tiên người có nhiều lần xuất hiện trong các tiêu đề
-- Nếu không đủ 5 người rõ ràng, điền tên nổi tiếng nhất bạn xác định được
+- Nếu không đủ 7 người rõ ràng, điền tên nổi tiếng nhất bạn xác định được
 - KHÔNG giải thích, chỉ xuất ra JSON array
 
 Dữ liệu:
@@ -75,13 +75,13 @@ ${joined}`;
         if (match) {
             const parsed = JSON.parse(match[0]);
             if (Array.isArray(parsed)) {
-                return parsed.slice(0, 5).map(n => String(n).trim());
+                return parsed.slice(0, 7).map(n => String(n).trim());
             }
         }
     } catch (err) {
         console.warn('⚠️  Gemini people analysis failed:', err.message);
     }
-    return ['Không xác định', '', '', '', ''];
+    return ['Không xác định', '', '', '', '', '', ''];
 }
 
 // Scrape articles từ một trang, trả về [{title, url, source, date}]
@@ -189,13 +189,13 @@ async function updateTrendingData() {
 
         console.log(`📊 Tổng số tiêu đề thu thập được: ${allHeadlines.length}`);
 
-        // Dùng Gemini xác định top 5 nhân vật
-        const top5People = await analyzeTop5PeopleWithGemini(allHeadlines);
-        console.log('🌟 Top 5 nhân vật:', top5People);
+        // Dùng Gemini xác định top 7 nhân vật
+        const top7People = await analyzeTop7PeopleWithGemini(allHeadlines);
+        console.log('🌟 Top 7 nhân vật:', top7People);
 
         // Fetch stats cho mỗi nhân vật
         const peopleWithStats = [];
-        for (const person of top5People) {
+        for (const person of top7People) {
             if (person) {
                 const stats = await getPeopleStats([person]);
                 if (stats.length > 0) {
@@ -206,9 +206,7 @@ async function updateTrendingData() {
                 } else {
                     peopleWithStats.push({
                         name: person,
-                        stats: {
-                            facebook: { views: 0, likes: 0, comments: 0 }
-                        }
+                        stats: {}
                     });
                 }
             }
@@ -216,8 +214,8 @@ async function updateTrendingData() {
         console.log('📊 Đã fetch stats cho các nhân vật');
 
         // Tìm đúng 1 bài báo cho mỗi người
-        const articles = await fetchArticlesForPeople(top5People);
-        console.log(`📰 Tìm được ${articles.length} bài báo cho 5 nhân vật`);
+        const articles = await fetchArticlesForPeople(top7People);
+        console.log(`📰 Tìm được ${articles.length} bài báo cho 7 nhân vật`);
 
         // Cập nhật cache
         trendingCache = {
