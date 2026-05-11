@@ -192,6 +192,4 @@ app.listen(PORT, () => {
     console.log(`🚀 Server running at http://localhost:${PORT}`);
     console.log('📰 Kênh14 Scraper is ready!');
     console.log('⏰ Trending sẽ tự cập nhật lúc 9:00 SA mỗi ngày (giờ VN)');
-    // Fetch trending data khi khởi động
-    setTimeout(() => updateTrendingData(), 2000);
 });
