@@ -6,7 +6,6 @@ const { getPeopleStats } = require('./stats');
 // In-memory cache
 let trendingCache = {
     people: [],
-    articles: [],
     updatedAt: null
 };
 
@@ -110,7 +109,24 @@ async function scrapeArticlesFromSource(sourceUrl, sourceName, people) {
 
         // Kiểm tra có đề cập đến người nào trong top 5 không
         const titleLower = title.toLowerCase();
-        const matched = people.some(p => p && titleLower.includes(p.toLowerCase().split(' ').pop()));
+        // Check toàn bộ tên người
+        const matched = people.some(p => {
+            if (!p) return false;
+            const nameLower = p.toLowerCase();
+            // Chỉ match nếu:
+            // 1. Toàn bộ tên xuất hiện trong title
+            // 2. HOẶC tất cả các từ trong tên đều xuất hiện (đặc biệt cho tên 2-3 từ)
+            if (titleLower.includes(nameLower)) {
+                return true;
+            }
+            // Check nếu toàn bộ các từ trong tên đều có trong title
+            const nameParts = nameLower.split(' ').filter(p => p.length > 0);
+            if (nameParts.length > 1) {
+                // Cho tên nhiều từ, cần tất cả từ xuất hiện
+                return nameParts.every(part => titleLower.includes(part));
+            }
+            return false;
+        });
         if (!matched) return;
 
         results.push({ title, url: fullUrl, source: sourceName });
@@ -133,43 +149,40 @@ async function scrapeArticlesFromSource(sourceUrl, sourceName, people) {
     return filtered.slice(0, 20);
 }
 
-// Lấy 1 bài báo cho mỗi người, không trùng bài báo
+// Lấy ALL bài báo cho mỗi người trong 48 giờ
 async function fetchArticlesForPeople(people) {
     const sources = [
         { url: 'https://kenh14.vn/star.chn', name: 'Kenh14' },
         { url: 'https://www.saostar.vn/giai-tri/', name: 'Saostar' }
     ];
 
-    const results = [];
-    const usedUrls = new Set();
+    const peopleArticles = [];
 
-    // Cho mỗi người, tìm 1 bài báo từ 2 nguồn
+    // Cho mỗi người, lấy TẤT CẢ bài báo từ các nguồn
     for (const person of people) {
         if (!person) continue;
-        let found = false;
 
+        const personArticles = [];
+
+        // Fetch từ tất cả nguồn
         for (const src of sources) {
-            if (found) break;
             const articles = await scrapeArticlesFromSource(src.url, src.name, [person]);
-            
-            // Lấy bài báo đầu tiên chưa được dùng
-            for (const article of articles) {
-                if (!usedUrls.has(article.url)) {
-                    results.push(article);
-                    usedUrls.add(article.url);
-                    found = true;
-                    console.log(`📄 ${person}: found article from ${src.name}`);
-                    break;
-                }
-            }
+            personArticles.push(...articles);
         }
 
-        if (!found) {
-            console.log(`⚠️ ${person}: không tìm được bài báo`);
-        }
+        // Sort theo ngày mới nhất, limit top 10
+        personArticles.sort((a, b) => new Date(b.date) - new Date(a.date));
+        const topArticles = personArticles.slice(0, 10);
+
+        peopleArticles.push({
+            person,
+            articles: topArticles
+        });
+
+        console.log(`📄 ${person}: tìm được ${topArticles.length} bài báo`);
     }
 
-    return results;
+    return peopleArticles;
 }
 
 // Hàm chính: cập nhật toàn bộ trending data
@@ -213,14 +226,22 @@ async function updateTrendingData() {
         }
         console.log('📊 Đã fetch stats cho các nhân vật');
 
-        // Tìm đúng 1 bài báo cho mỗi người
-        const articles = await fetchArticlesForPeople(top7People);
-        console.log(`📰 Tìm được ${articles.length} bài báo cho 7 nhân vật`);
+        // Lấy TẤT CẢ bài báo cho mỗi người
+        const peopleArticles = await fetchArticlesForPeople(top7People);
+        console.log(`📰 Tìm được articles cho ${peopleArticles.length} nhân vật`);
 
-        // Cập nhật cache
+        // Merge articles vào peopleWithStats
+        const people = peopleWithStats.map(person => {
+            const articleData = peopleArticles.find(pa => pa.person === person.name);
+            return {
+                ...person,
+                articles: articleData ? articleData.articles : []
+            };
+        });
+
+        // Cập nhật cache - chỉ lưu people, không cần articles array riêng
         trendingCache = {
-            people: peopleWithStats,
-            articles: articles,
+            people: people,
             updatedAt: new Date().toISOString()
         };
 
