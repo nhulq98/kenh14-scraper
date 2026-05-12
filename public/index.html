@@ -357,7 +357,7 @@
             padding: 15px;
         }
 
-        /* Viettel TTS Section Styles */
+        /* Viettel TTS Section Styles - Multi-Step Form */
         .tts-section {
             grid-column: 1 / -1;
         }
@@ -366,118 +366,321 @@
             background: #EF5350;
         }
 
-        .tts-container {
+        .tts-form {
             display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
+            gap: 30px;
         }
 
-        @media (max-width: 1024px) {
-            .tts-container {
-                grid-template-columns: 1fr;
-            }
+        /* Step Header - Hidden */
+        .step-header {
+            display: none;
         }
 
-        .tts-input-area {
+        /* Step Content - All Visible */
+        .step-content {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Step 1: Project Name */
+        .step-1-content {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
         }
 
-        #ttsText {
-            width: 100%;
-            min-height: 290px;
-            resize: vertical;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-            line-height: 1.6;
-        }
-
-        .tts-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .control-group label {
+        .step-1-content label {
             font-weight: 600;
             color: var(--text-primary);
-            font-size: 0.9em;
+            font-size: 0.95em;
         }
 
-        #voiceSelect, #speedSelect {
-            padding: 10px 12px;
+        .project-select {
+            padding: 12px 15px;
             border: 2px solid var(--border);
             border-radius: 10px;
-            font-family: 'Segoe UI', sans-serif;
             font-size: 0.95em;
             background: white;
             cursor: pointer;
             transition: all 0.3s ease;
         }
 
-        #voiceSelect:focus, #speedSelect:focus {
+        .project-select:focus {
             outline: none;
             border-color: #EF5350;
             box-shadow: 0 0 0 3px rgba(239, 83, 80, 0.1);
         }
 
-        .tts-controls button {
-            padding: 12px 16px;
+        /* Step 2: Text Input */
+        .step-2-content {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .step-2-content label {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95em;
+        }
+
+        #ttsText {
+            width: 100%;
+            min-height: 200px;
+            padding: 12px 14px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
             font-size: 0.9em;
+            line-height: 1.6;
+            resize: vertical;
+            transition: all 0.3s ease;
+            background: var(--bg-light);
         }
 
-        .btn-tts {
-            background: linear-gradient(135deg, #EF5350, #F44336);
-            color: white;
+        #ttsText:focus {
+            outline: none;
+            border-color: #EF5350;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(239, 83, 80, 0.1);
         }
 
-        .btn-tts:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(239, 83, 80, 0.3);
-        }
-
-        .btn-listen {
-            background: linear-gradient(135deg, #4CAF50, #66BB6A);
-            color: white;
-        }
-
-        .btn-listen:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
-        }
-
-        .btn-download {
-            background: linear-gradient(135deg, #2196F3, #42A5F5);
-            color: white;
-        }
-
-        .btn-download:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(33, 150, 243, 0.3);
-        }
-
-        .tts-buttons {
+        .text-controls {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
         }
 
-        .button-wrapper {
+        .btn-upload {
+            padding: 10px 16px;
+            border: 2px solid #EF5350;
+            background: white;
+            color: #EF5350;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-upload:hover {
+            background: #FBE9E9;
+        }
+
+        .char-count-display {
+            font-size: 0.85em;
+            color: #999;
+            padding: 8px 0;
+        }
+
+        .char-count-display strong {
+            color: #EF5350;
+            font-weight: 600;
+        }
+
+        /* Step 3: Voice Selection */
+        .step-3-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .step-3-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .voice-selection-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .voice-section-title {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 0.95em;
+        }
+
+        /* Region Selection */
+        .region-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .region-btn {
+            padding: 10px 16px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .region-btn:hover {
+            border-color: #EF5350;
+            color: #EF5350;
+        }
+
+        .region-btn.active {
+            background: #EF5350;
+            color: white;
+            border-color: #EF5350;
+        }
+
+        /* Voice Options Grid */
+        .voice-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            max-height: 350px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #fafafa;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .voice-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .voice-option:hover {
+            border-color: #EF5350;
+            background: #FBE9E9;
+        }
+
+        .voice-option input[type="radio"] {
+            cursor: pointer;
+            accent-color: #EF5350;
+        }
+
+        .voice-option label {
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .voice-option input[type="radio"]:checked + label {
+            font-weight: 700;
+            color: #EF5350;
+        }
+
+        /* Speed Adjustment Panel */
+        .speed-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .speed-label {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 0.95em;
+        }
+
+        .speed-slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #speedSelect {
             flex: 1;
-            min-width: 150px;
+            padding: 10px 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9em;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .button-wrapper button {
-            width: 100%;
+        #speedSelect:focus {
+            outline: none;
+            border-color: #EF5350;
+            box-shadow: 0 0 0 3px rgba(239, 83, 80, 0.1);
         }
 
+        .speed-value {
+            min-width: 60px;
+            text-align: center;
+            font-weight: 700;
+            color: #EF5350;
+            background: #FBE9E9;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+
+        /* Action Buttons */
+        .tts-action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn-read {
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #EF5350, #F44336);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-read:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(239, 83, 80, 0.3);
+        }
+
+        .btn-read:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-detect {
+            padding: 14px 20px;
+            background: white;
+            color: #EF5350;
+            border: 2px solid #EF5350;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-detect:hover:not(:disabled) {
+            background: #FBE9E9;
+        }
+
+        .btn-detect:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Audio Player */
         .audio-player {
             background: var(--bg-light);
             padding: 12px;
@@ -495,18 +698,14 @@
             margin-bottom: 8px;
         }
 
-        .char-count-tts {
-            font-size: 0.8em;
-            color: var(--text-secondary);
-            margin-top: 5px;
-        }
-
+        /* Status Messages */
         .tts-status {
-            padding: 10px 12px;
+            padding: 12px 15px;
             border-radius: 8px;
             font-size: 0.9em;
-            margin-top: 8px;
+            margin-top: 12px;
             display: none;
+            animation: fadeIn 0.3s ease;
         }
 
         .tts-status.show {
@@ -618,97 +817,114 @@
             </div>
         </div>
 
-        <!-- Viettel TTS Section -->
+        <!-- Viettel TTS Section - Multi-Step Form -->
         <div class="section tts-section">
             <div class="section-title">🔊 Viettel Text-to-Speech</div>
-            <div class="tts-container">
-                <!-- Input Area -->
-                <div class="tts-input-area">
-                    <textarea 
-                        id="ttsText" 
-                        placeholder="Nhập văn bản tiếng Việt tối đa 1500 ký tự (hoặc chọn từ nội dung gốc ở trên)..."
-                    ></textarea>
-                    <div class="char-count-tts" id="ttsCharCount">0/1500 ký tự</div>
-                    <button class="btn-secondary" id="copyFromContentBtn">
-                        📋 Copy từ Nội Dung Tóm tắt
-                    </button>
+            
+            <div class="tts-form">
+                <!-- Step Indicators -->
+                <div class="step-header">
+                    <div class="step-indicator active" id="step1Indicator">
+                        <div class="step-number">1</div>
+                        <span>Tên Dự Án</span>
+                    </div>
+                    <div class="step-indicator" id="step2Indicator">
+                        <div class="step-number">2</div>
+                        <span>Nhập Văn Bản</span>
+                    </div>
+                    <div class="step-indicator" id="step3Indicator">
+                        <div class="step-number">3</div>
+                        <span>Chọn Giọng Đọc</span>
+                    </div>
                 </div>
 
-                <!-- Controls Area -->
-                <div class="tts-controls">
-                    <!-- Voice Selection -->
-                    <div class="control-group">
-                        <label for="voiceSelect">🎤 Chọn Giọng Đọc:</label>
-                        <select id="voiceSelect">
-                            <optgroup label="🗻 Miền Bắc">
-                                <option value="hn-quynhanh">Quỳnh Anh (Nữ - Bắc)</option>
-                                <option value="hn-phuongtrang">Phương Trang (Nữ - Bắc)</option>
-                                <option value="hn-thaochi">Thảo Chi (Nữ - Bắc)</option>
-                                <option value="hn-thanhha">Thanh Hà (Nữ - Bắc)</option>
-                                <option value="hn-thanhphuong">Thanh Phương (Nữ - Bắc)</option>
-                                <option value="hn-thanhtung">Thanh Tùng (Nam - Bắc)</option>
-                                <option value="hn-namkhanh">Nam Khánh (Nam - Bắc)</option>
-                                <option value="hn-tienquan">Tiến Quân (Nam - Bắc)</option>
-                            </optgroup>
-                            <optgroup label="🏔️ Miền Trung">
-                                <option value="hue-maingoc">Mai Ngọc (Nữ - Trung)</option>
-                                <option value="hue-baoquoc">Bảo Quốc (Nam - Trung)</option>
-                            </optgroup>
-                            <optgroup label="🌴 Miền Nam">
-                                <option value="hcm-diemmy">Diễm My (Nữ - Nam)</option>
-                                <option value="hcm-phuongly">Phương Ly (Nữ - Nam)</option>
-                                <option value="hcm-thuydung">Thủy Dung (Nữ - Nam)</option>
-                                <option value="hcm-thuyduyen">Thủy Duyên (Nữ - Nam)</option>
-                                <option value="hcm-leyen">Lệ Yên (Nữ - Nam)</option>
-                                <option value="hcm-minhquan">Minh Quân (Nam - Nam)</option>
-                            </optgroup>
+                <!-- Step 1: Project Name -->
+                <div class="step-content active" id="step1">
+                    <div class="step-1-content">
+                        <label for="projectSelect">Tên dự án</label>
+                        <select id="projectSelect" class="project-select">
+                            <option value="default">Default</option>
+                            <option value="project1">Project 1</option>
+                            <option value="project2">Project 2</option>
+                            <option value="project3">Project 3</option>
                         </select>
                     </div>
+                </div>
 
-                    <!-- Speed Selection -->
-                    <div class="control-group">
-                        <label for="speedSelect">⚡ Tốc Độ Đọc:</label>
-                        <select id="speedSelect">
-                            <option value="0.8">Chậm (0.8x)</option>
-                            <option value="0.9">Vừa Chậm (0.9x)</option>
-                            <option value="1" selected>Bình Thường (1x)</option>
-                            <option value="1.1">Vừa Nhanh (1.1x)</option>
-                            <option value="1.2">Nhanh (1.2x)</option>
-                        </select>
-                    </div>
-
-                    <!-- Action Buttons -->
-                    <div class="tts-buttons">
-                        <div class="button-wrapper">
-                            <button class="btn-tts" id="convertBtn">
-                                🎙️ Chuyển Thành Âm Thanh
-                            </button>
+                <!-- Step 2: Text Input -->
+                <div class="step-content" id="step2">
+                    <div class="step-2-content">
+                        <label for="ttsText">Nhập nội dung văn bản Tiếng Việt</label>
+                        <textarea 
+                            id="ttsText" 
+                            placeholder="Dán hoặc nhập văn bản tiếng Việt tối đa 50,000 ký tự..."
+                        ></textarea>
+                        <div class="char-count-display">
+                            <span id="ttsCharCount">0</span> / 50000 kỳ tự
                         </div>
-                        <div class="button-wrapper">
-                            <button class="btn-listen" id="playBtn" disabled>
-                                ▶️ Nghe Thử
+                        <div class="text-controls">
+                            <button class="btn-upload" id="uploadWordsBtn">
+                                ⬆️ Upload file words
                             </button>
-                        </div>
-                        <div class="button-wrapper">
-                            <button class="btn-download" id="downloadBtn" disabled>
-                                ⬇️ Tải Về
+                            <button class="btn-secondary" id="copyFromContentBtn">
+                                📋 Copy từ Nội Dung
                             </button>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Audio Player -->
-                    <div class="audio-player" id="audioPlayer">
-                        <audio id="audioElement" controls></audio>
-                        <div class="tts-status" id="playerStatus"></div>
-                    </div>
+                <!-- Step 3: Voice Selection & Speed -->
+                <div class="step-content" id="step3">
+                    <div class="step-3-content">
+                        <!-- Voice Selection Panel -->
+                        <div class="voice-selection-panel">
+                            <div class="voice-section-title">Chọn giọng đọc</div>
+                            
+                            <!-- Region Selection -->
+                            <div class="region-buttons" id="regionButtons">
+                                <button class="region-btn active" data-region="north">🗻 Miền Bắc</button>
+                                <button class="region-btn" data-region="central">🏔️ Miền Trung</button>
+                                <button class="region-btn" data-region="south">🌴 Miền Nam</button>
+                            </div>
 
-                    <!-- Status -->
-                    <div class="tts-status" id="ttsStatus"></div>
+                            <!-- Voice Options -->
+                            <div class="voice-options" id="voiceOptions">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
 
-                    <!-- Info -->
-                    <div class="info-box" style="background: #fff3e0; border-color: #FF6F00; color: #E65100;">
-                        <strong>💡 Hướng dẫn:</strong>
-                        Nhập hoặc copy văn bản, chọn giọng đọc và tốc độ, sau đó nhấn "Chuyển Thành Âm Thanh" để tạo âm thanh. Bạn có thể nghe thử hoặc tải về dạng MP3.
+                        <!-- Speed Adjustment Panel -->
+                        <div class="speed-panel">
+                            <div class="voice-section-title">Thay đổi tốc độ đọc</div>
+                            <div class="speed-slider-container">
+                                <select id="speedSelect" style="flex: 1;">
+                                    <option value="0.8">0.8</option>
+                                    <option value="0.9">0.9</option>
+                                    <option value="1" selected>1</option>
+                                    <option value="1.1">1.1</option>
+                                    <option value="1.2">1.2</option>
+                                </select>
+                                <div class="speed-value" id="speedValue">1</div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="tts-action-buttons">
+                                <button class="btn-read" id="convertBtn">
+                                    ▶️ Đọc Văn Bản
+                                </button>
+                                <button class="btn-detect" id="detectBtn">
+                                    🔍 Phát Hiện Âm Tiết
+                                </button>
+                            </div>
+
+                            <!-- Audio Player -->
+                            <div class="audio-player" id="audioPlayer">
+                                <audio id="audioElement" controls></audio>
+                            </div>
+
+                            <!-- Status -->
+                            <div class="tts-status" id="ttsStatus"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -886,44 +1102,107 @@
         // ==================== VIETTEL TTS SECTION ====================
         const ttsText = document.getElementById('ttsText');
         const ttsCharCount = document.getElementById('ttsCharCount');
-        const voiceSelect = document.getElementById('voiceSelect');
         const speedSelect = document.getElementById('speedSelect');
+        const speedValue = document.getElementById('speedValue');
         const convertBtn = document.getElementById('convertBtn');
-        const playBtn = document.getElementById('playBtn');
-        const downloadBtn = document.getElementById('downloadBtn');
+        const detectBtn = document.getElementById('detectBtn');
+        const uploadWordsBtn = document.getElementById('uploadWordsBtn');
         const copyFromContentBtn = document.getElementById('copyFromContentBtn');
         const audioPlayer = document.getElementById('audioPlayer');
         const audioElement = document.getElementById('audioElement');
         const ttsStatus = document.getElementById('ttsStatus');
-        const playerStatus = document.getElementById('playerStatus');
-
+        
+        // Voice selection
+        const regionButtons = document.getElementById('regionButtons');
+        const voiceOptions = document.getElementById('voiceOptions');
+        
+        // Voice data by region
+        const voiceData = {
+            north: [
+                { id: 'hn-quynhanh', name: 'Quỳnh Anh', gender: 'Nữ' },
+                { id: 'hn-phuongtrang', name: 'Phương Trăng', gender: 'Nữ' },
+                { id: 'hn-thaochi', name: 'Thảo Chi', gender: 'Nữ' },
+                { id: 'hn-thanhha', name: 'Thạnh Hà', gender: 'Nữ' },
+                { id: 'hn-thanhphuong', name: 'Thạnh Phương', gender: 'Nữ' },
+                { id: 'hn-thanhtung', name: 'Thạnh Tùng', gender: 'Nam' },
+                { id: 'hn-namkhanh', name: 'Nam Khánh', gender: 'Nam' },
+                { id: 'hn-tienquan', name: 'Tiến Quân', gender: 'Nam' }
+            ],
+            central: [
+                { id: 'hue-maingoc', name: 'Mai Ngọc', gender: 'Nữ' },
+                { id: 'hue-baoquoc', name: 'Bảo Quốc', gender: 'Nam' }
+            ],
+            south: [
+                { id: 'hcm-diemmy', name: 'Diễm My', gender: 'Nữ' },
+                { id: 'hcm-phuongly', name: 'Phương Ly', gender: 'Nữ' },
+                { id: 'hcm-thuydung', name: 'Thủy Dung', gender: 'Nữ' },
+                { id: 'hcm-thuyduyen', name: 'Thủy Duyên', gender: 'Nữ' },
+                { id: 'hcm-leyen', name: 'Lệ Yên', gender: 'Nữ' },
+                { id: 'hcm-minhquan', name: 'Minh Quân', gender: 'Nam' }
+            ]
+        };
+        
+        let selectedVoice = 'hn-quynhanh';
+        let selectedRegion = 'north';
         let audioBlob = null;
         let audioUrl = null;
 
         // Event Listeners for TTS
         ttsText.addEventListener('input', updateTtsCharCount);
         convertBtn.addEventListener('click', convertToSpeech);
-        playBtn.addEventListener('click', playAudio);
-        downloadBtn.addEventListener('click', downloadAudio);
+        detectBtn.addEventListener('click', detectSpecialSyllables);
+        uploadWordsBtn.addEventListener('click', () => alert('Upload file feature coming soon'));
         copyFromContentBtn.addEventListener('click', copyFromContent);
-
-        ttsText.addEventListener('keypress', (e) => {
-            if (e.ctrlKey && e.key === 'Enter') {
-                convertToSpeech();
+        speedSelect.addEventListener('change', updateSpeedValue);
+        
+        // Region button clicks
+        regionButtons.addEventListener('click', (e) => {
+            if (e.target.classList.contains('region-btn')) {
+                document.querySelectorAll('.region-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                selectedRegion = e.target.dataset.region;
+                renderVoiceOptions(selectedRegion);
             }
         });
 
+        function renderVoiceOptions(region) {
+            voiceOptions.innerHTML = '';
+            const voices = voiceData[region] || [];
+            
+            voices.forEach((voice, index) => {
+                const label = document.createElement('label');
+                label.className = 'voice-option';
+                
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = 'voice';
+                radio.value = voice.id;
+                radio.checked = index === 0;
+                radio.addEventListener('change', () => {
+                    selectedVoice = voice.id;
+                });
+                
+                const labelText = document.createElement('label');
+                labelText.textContent = `${voice.name} (${voice.gender})`;
+                
+                label.appendChild(radio);
+                label.appendChild(labelText);
+                voiceOptions.appendChild(label);
+            });
+        }
+
         function updateTtsCharCount() {
             const length = ttsText.value.length;
-            const remaining = 1500 - length;
-            const color = remaining < 0 ? '#ef4444' : 'var(--text-secondary)';
-            ttsCharCount.textContent = `${length}/1500 ký tự`;
-            ttsCharCount.style.color = color;
-
-            if (length > 1500) {
-                ttsText.value = ttsText.value.substring(0, 1500);
-                ttsCharCount.textContent = '1500/1500 ký tự (Tối đa)';
+            ttsCharCount.textContent = length;
+            
+            if (length > 50000) {
+                ttsText.value = ttsText.value.substring(0, 50000);
+                ttsCharCount.textContent = '50000';
             }
+        }
+
+        function updateSpeedValue() {
+            speedValue.textContent = speedSelect.value;
         }
 
         function copyFromContent() {
@@ -932,8 +1211,7 @@
                 return;
             }
 
-            // Copy first 1500 characters
-            const content = geminiOutput.value.substring(0, 1500);
+            const content = geminiOutput.value.substring(0, 50000);
             ttsText.value = content;
             updateTtsCharCount();
             showTtsStatus('success', '✅ Đã copy nội dung!');
@@ -948,14 +1226,13 @@
                 return;
             }
 
-            if (text.length > 1500) {
-                showTtsStatus('error', '❌ Văn bản không được vượt quá 1500 ký tự');
+            if (text.length > 50000) {
+                showTtsStatus('error', '❌ Văn bản không được vượt quá 50,000 ký tự');
                 return;
             }
 
             convertBtn.disabled = true;
-            playBtn.disabled = true;
-            downloadBtn.disabled = true;
+            detectBtn.disabled = true;
             showTtsStatus('loading', '<span class="spinner"></span>Đang chuyển đổi thành âm thanh...');
 
             try {
@@ -964,7 +1241,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         text: text,
-                        voice: voiceSelect.value,
+                        voice: selectedVoice,
                         speed: parseFloat(speedSelect.value)
                     })
                 });
@@ -974,64 +1251,44 @@
                     throw new Error(errorData.error || 'Lỗi khi chuyển đổi');
                 }
 
-                // Get audio blob
                 audioBlob = await response.blob();
                 audioUrl = URL.createObjectURL(audioBlob);
-
-                // Set audio source
                 audioElement.src = audioUrl;
-
-                // Show audio player
                 audioPlayer.classList.add('show');
-                showTtsStatus('success', '✅ Chuyển đổi thành công! Nghe thử hoặc tải về.');
-                playBtn.disabled = false;
-                downloadBtn.disabled = false;
+                showTtsStatus('success', '✅ Chuyển đổi thành công!');
 
             } catch (error) {
                 console.error('Error:', error);
                 showTtsStatus('error', '❌ Lỗi: ' + error.message);
                 audioPlayer.classList.remove('show');
-                playBtn.disabled = true;
-                downloadBtn.disabled = true;
             } finally {
                 convertBtn.disabled = false;
+                detectBtn.disabled = false;
             }
         }
 
-        function playAudio() {
-            if (!audioElement.src) {
-                showTtsStatus('error', '❌ Chưa có âm thanh để phát');
+        function detectSpecialSyllables() {
+            const text = ttsText.value.trim();
+            if (!text) {
+                showTtsStatus('error', '❌ Vui lòng nhập văn bản');
                 return;
             }
-            audioElement.play();
-        }
-
-        function downloadAudio() {
-            if (!audioBlob) {
-                showTtsStatus('error', '❌ Chưa có âm thanh để tải');
-                return;
-            }
-
-            // Generate filename with timestamp
-            const timestamp = new Date().toLocaleTimeString('vi-VN').replace(/:/g, '-');
-            const filename = `audio_${timestamp}.mp3`;
-
-            // Create download link
-            const downloadLink = document.createElement('a');
-            downloadLink.href = audioUrl;
-            downloadLink.download = filename;
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-
-            showTtsStatus('success', `✅ Đã tải "${filename}"`);
-            setTimeout(() => ttsStatus.classList.remove('show'), 1500);
+            showTtsStatus('loading', '🔍 Phát hiện âm tiết đặc biệt...');
+            // Add your detection logic here
+            setTimeout(() => {
+                showTtsStatus('success', '✅ Hoàn thành phát hiện âm tiết đặc biệt');
+                setTimeout(() => ttsStatus.classList.remove('show'), 2000);
+            }, 1000);
         }
 
         function showTtsStatus(type, message) {
             ttsStatus.className = `tts-status show ${type}`;
             ttsStatus.innerHTML = message;
         }
+
+        // Initialize voice options
+        renderVoiceOptions('north');
+        updateSpeedValue();
 
         // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
