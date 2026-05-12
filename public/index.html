@@ -541,7 +541,7 @@
         /* Voice Options Grid */
         .voice-options {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
             gap: 8px;
             max-height: 250px;
             overflow-y: auto;
@@ -549,6 +549,18 @@
             background: #fafafa;
             border-radius: 10px;
             border: 1px solid #e0e0e0;
+        }
+
+        @media (max-width: 1024px) {
+            .voice-options {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .voice-options {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
         .voice-option {
@@ -1303,6 +1315,55 @@
         let audioBlob = null;
         let audioUrl = null;
 
+        // Local Storage Settings Management
+        const STORAGE_KEY = 'tts_settings';
+
+        function saveSettings() {
+            const settings = {
+                voice: selectedVoice,
+                region: selectedRegion,
+                speed: speedSelect.value
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    const settings = JSON.parse(saved);
+                    selectedRegion = settings.region || 'north';
+                    selectedVoice = settings.voice || 'hn-quynhanh';
+                    
+                    // Render voice options for saved region
+                    renderVoiceOptions(selectedRegion);
+                    
+                    // Update region buttons
+                    document.querySelectorAll('.region-btn').forEach(btn => {
+                        if (btn.dataset.region === selectedRegion) {
+                            btn.classList.add('active');
+                        } else {
+                            btn.classList.remove('active');
+                        }
+                    });
+                    
+                    // Set speed
+                    speedSelect.value = settings.speed || '1';
+                    updateSpeedValue();
+                    
+                    // Set radio button for voice
+                    const voiceRadios = document.querySelectorAll('input[name="voice"]');
+                    voiceRadios.forEach(radio => {
+                        if (radio.value === selectedVoice) {
+                            radio.checked = true;
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error loading settings:', error);
+                }
+            }
+        }
+
         // Event Listeners for TTS
         ttsText.addEventListener('input', () => {
             updateTtsCharCount();
@@ -1434,6 +1495,9 @@
                 return;
             }
 
+            // Save current settings before converting
+            saveSettings();
+
             convertBtn.disabled = true;
             detectBtn.disabled = true;
             showTtsStatus('loading', '<span class="spinner"></span>Đang chuyển đổi thành âm thanh...');
@@ -1514,6 +1578,9 @@
         renderVoiceOptions('north');
         updateSpeedValue();
         updateButtonStates();
+        
+        // Load saved settings from localStorage
+        loadSettings();
 
         // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
