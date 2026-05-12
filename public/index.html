@@ -1821,14 +1821,74 @@
         });
 
         // ===== TRENDING FUNCTIONS =====
+        
+        // localStorage cache key and duration (1 day)
+        const TRENDING_CACHE_KEY = 'trending_data_cache';
+        const TRENDING_CACHE_DURATION = 24 * 60 * 60 * 1000; // 1 day in milliseconds
+        
+        // Save trending data to localStorage with expiration timestamp
+        function saveTrendingToCache(data) {
+            const cacheData = {
+                people: data.people,
+                updatedAt: data.updatedAt,
+                expiresAt: Date.now() + TRENDING_CACHE_DURATION
+            };
+            localStorage.setItem(TRENDING_CACHE_KEY, JSON.stringify(cacheData));
+            console.log('📦 Lưu trending data vào cache (expires: ' + new Date(cacheData.expiresAt).toLocaleString('vi-VN') + ')');
+        }
+        
+        // Load trending data from localStorage if not expired
+        function loadTrendingFromCache() {
+            try {
+                const cached = localStorage.getItem(TRENDING_CACHE_KEY);
+                if (!cached) return null;
+                
+                const cacheData = JSON.parse(cached);
+                
+                // Check if cache has expired
+                if (Date.now() > cacheData.expiresAt) {
+                    console.log('⏰ Cache hết hạn, cần cập nhật từ server');
+                    localStorage.removeItem(TRENDING_CACHE_KEY);
+                    return null;
+                }
+                
+                console.log('✅ Đang dùng cache từ localStorage');
+                return cacheData;
+            } catch (err) {
+                console.warn('Lỗi đọc cache:', err);
+                return null;
+            }
+        }
+        
+        // Clear trending cache from localStorage
+        function clearTrendingCache() {
+            localStorage.removeItem(TRENDING_CACHE_KEY);
+            console.log('🗑️  Đã xóa trending cache');
+        }
+        
+        // Load trending data - prioritizes localStorage cache
         async function loadTrending() {
             try {
+                // Try to load from localStorage first
+                const cachedData = loadTrendingFromCache();
+                if (cachedData) {
+                    renderPeople(cachedData.people || []);
+                    const timeStr = cachedData.updatedAt ? formatUpdatedAt(cachedData.updatedAt) : '--';
+                    document.getElementById('trendingUpdatedAt').textContent = timeStr + ' (📦 from cache)';
+                    return; // Don't call server if cache is valid
+                }
+                
+                // If cache is empty or expired, fetch from server
+                console.log('📡 Cache rỗng/hết hạn, fetch từ server...');
                 const res = await fetch('/api/trending');
                 const data = await res.json();
                 if (data.success) {
+                    // Save to localStorage
+                    saveTrendingToCache(data);
+                    
                     renderPeople(data.people || []);
                     const timeStr = data.updatedAt ? formatUpdatedAt(data.updatedAt) : '--';
-                    document.getElementById('trendingUpdatedAt').textContent = timeStr;
+                    document.getElementById('trendingUpdatedAt').textContent = timeStr + ' (📡 from server)';
                 } else {
                     showTrendingError();
                 }
@@ -1848,9 +1908,12 @@
                 const res = await fetch('/api/trending/refresh', { method: 'POST' });
                 const data = await res.json();
                 if (data.success) {
+                    // Save to localStorage
+                    saveTrendingToCache(data);
+                    
                     renderPeople(data.people || []);
                     const timeStr = data.updatedAt ? formatUpdatedAt(data.updatedAt) : '--';
-                    document.getElementById('trendingUpdatedAt').textContent = timeStr;
+                    document.getElementById('trendingUpdatedAt').textContent = timeStr + ' (🔄 just refreshed)';
                 } else {
                     showTrendingError();
                 }

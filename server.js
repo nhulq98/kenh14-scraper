@@ -186,9 +186,9 @@ app.post('/api/trending/refresh', async (req, res) => {
 // SCHEDULER
 // ============================================================
 
-// Scheduler: cập nhật lúc 9:00 sáng mỗi ngày (giờ VN = UTC+7)
-cron.schedule('0 9 * * *', () => {
-    console.log('⏰ [Scheduler] 9:00 SA – đang cập nhật trending...');
+// Scheduler: cập nhật lúc 8:00 sáng mỗi ngày (giờ VN = UTC+7)
+cron.schedule('0 8 * * *', () => {
+    console.log('⏰ [Scheduler] 8:00 SA – đang cập nhật trending...');
     updateTrendingData();
 }, {
     timezone: 'Asia/Ho_Chi_Minh'
@@ -300,5 +300,5 @@ app.post('/api/tts/convert', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`🚀 Server running at http://localhost:${PORT}`);
     console.log('📰 Kênh14 Scraper is ready!');
-    console.log('⏰ Trending sẽ tự cập nhật lúc 9:00 SA mỗi ngày (giờ VN)');
+    console.log('⏰ Trending sẽ tự cập nhật lúc 8:00 SA mỗi ngày (giờ VN)');
 });
