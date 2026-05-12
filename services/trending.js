@@ -1,4 +1,6 @@
 const cheerio = require('cheerio');
+const puppeteer = require('puppeteer');
+const fs = require('fs');
 const { safeFetch, extractArticleDate } = require('./scraper');
 const { generateSummaryWithRetry } = require('./gemini');
 const { getPeopleStats } = require('./stats');
@@ -8,6 +10,88 @@ let trendingCache = {
     people: [],
     updatedAt: null
 };
+
+// Fetch HTML with Puppeteer - scrolls through page and clicks load more to get all articles
+async function fetchWithPuppeteer(url) {
+    let browser;
+    try {
+        browser = await puppeteer.launch({
+            headless: 'new',
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+        
+        const page = await browser.newPage();
+        await page.setViewport({ width: 1920, height: 1080 });
+        await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+        
+        // Scroll and click load more button multiple times to load all content
+        let previousHeight = 0;
+        let scrollAttempts = 0;
+        const maxScrolls = 15; // Prevent infinite loops - tăng số lần scroll
+        
+        while (scrollAttempts < maxScrolls) {
+            // Get current page height
+            const currentHeight = await page.evaluate(() => document.documentElement.scrollHeight);
+            
+            // If height hasn't changed, we've reached the end
+            if (currentHeight === previousHeight) {
+                console.log(`✅ Reached end of page after ${scrollAttempts} scrolls`);
+                break;
+            }
+            
+            previousHeight = currentHeight;
+            scrollAttempts++;
+            
+            // Scroll to bottom of page
+            await page.evaluate(() => {
+                window.scrollTo(0, document.documentElement.scrollHeight);
+            });
+            
+            console.log(`📜 Scrolled down (attempt ${scrollAttempts}), page height: ${currentHeight}px`);
+            
+            // Waiting 4 seconds between scrolls for lazy loading
+            await new Promise(resolve => setTimeout(resolve, 4000));
+            
+            // Try to click load more button if it exists
+            try {
+                const clicked = await page.evaluate(() => {
+                    const btn = document.querySelector('a[onclick*="LoadListDetail"]') || 
+                               document.querySelector('a[onclick*="LoadList"]') ||
+                               document.querySelector('a[onclick*="Load"]');
+                    if (btn && btn.offsetParent !== null) { // Check if visible
+                        btn.click();
+                        return true;
+                    }
+                    return false;
+                });
+                
+                if (clicked) {
+                    console.log(`✅ Clicked load more button (attempt ${scrollAttempts})`);
+                    // Waiting 4 seconds for content to load after each click
+                    await new Promise(resolve => setTimeout(resolve, 4000));
+                }
+            } catch (err) {
+                // Load more button might not exist, continue scrolling
+            }
+        }
+        
+        console.log(`📰 Finished loading content after ${scrollAttempts} scrolls`);
+        
+        // Wait a final moment for all images and content to settle
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Get the full HTML content
+        const html = await page.content();
+        await browser.close();
+        
+        return html;
+    } catch (err) {
+        if (browser) await browser.close();
+        console.warn(`⚠️  fetchWithPuppeteer failed for ${url}: ${err.message}`);
+        // Fallback to safeFetch if Puppeteer fails
+        return await safeFetch(url);
+    }
+}
 
 // Scrape tiêu đề bài viết từ Kenh14 star page
 async function scrapeKenh14Headlines() {
@@ -83,14 +167,23 @@ ${joined}`;
     return ['Không xác định', '', '', '', '', '', ''];
 }
 
-// Scrape articles từ một trang, trả về [{title, url, source, date}]
-async function scrapeArticlesFromSource(sourceUrl, sourceName, people) {
-    const html = await safeFetch(sourceUrl);
-    if (!html) return [];
+// Parse articles từ HTML cho nhiều người - Chỉ parse HTML 1 lần
+async function parseArticlesFromHTML(html, sourceUrl, sourceName, people) {
+    if (!html) return {};
+    
+    // Xuất HTML ra file để xem toàn bộ nội dung
+    fs.writeFileSync('html_output.html', html, 'utf8');
+    console.log('✅ HTML từ ' + sourceName + ' đã được lưu vào file: html_output.html');
+    
     const $ = cheerio.load(html);
-    const results = [];
     const now = Date.now();
     const limit48h = 48 * 60 * 60 * 1000;
+    const peopleArticles = {};
+
+    // Initialize articles array cho mỗi person
+    people.forEach(p => {
+        if (p) peopleArticles[p] = [];
+    });
 
     // Lấy tất cả link có title
     $('a').each((i, el) => {
@@ -107,74 +200,94 @@ async function scrapeArticlesFromSource(sourceUrl, sourceName, people) {
             return;
         }
 
-        // Kiểm tra có đề cập đến người nào trong top 5 không
+        // Kiểm tra có đề cập đến người nào trong list không
         const titleLower = title.toLowerCase();
-        // Check toàn bộ tên người
-        const matched = people.some(p => {
+        const matchedPeople = people.filter(p => {
             if (!p) return false;
             const nameLower = p.toLowerCase();
-            // Chỉ match nếu:
-            // 1. Toàn bộ tên xuất hiện trong title
-            // 2. HOẶC tất cả các từ trong tên đều xuất hiện (đặc biệt cho tên 2-3 từ)
             if (titleLower.includes(nameLower)) {
                 return true;
             }
-            // Check nếu toàn bộ các từ trong tên đều có trong title
-            const nameParts = nameLower.split(' ').filter(p => p.length > 0);
+            const nameParts = nameLower.split(' ').filter(part => part.length > 0);
             if (nameParts.length > 1) {
-                // Cho tên nhiều từ, cần tất cả từ xuất hiện
                 return nameParts.every(part => titleLower.includes(part));
             }
             return false;
         });
-        if (!matched) return;
 
-        results.push({ title, url: fullUrl, source: sourceName });
+        // Nếu title match với bất kỳ người nào, thêm vào tất cả matched people
+        if (matchedPeople.length > 0) {
+            matchedPeople.forEach(person => {
+                peopleArticles[person].push({ title, url: fullUrl, source: sourceName });
+            });
+        }
     });
 
-    // Filter by 48-hour window
-    const filtered = [];
-    for (const article of results) {
-        const articleDate = await extractArticleDate(article.url);
-        if (articleDate && (now - articleDate) <= limit48h) {
-            filtered.push({ 
-                title: article.title, 
-                url: article.url, 
-                source: article.source,
-                date: new Date(articleDate).toISOString()
-            });
+    // Filter by 48-hour window và limit
+    for (const person of people) {
+        if (!person || !peopleArticles[person]) continue;
+
+        const filtered = [];
+        for (const article of peopleArticles[person]) {
+            const articleDate = await extractArticleDate(article.url);
+            if (articleDate && (now - articleDate) <= limit48h) {
+                filtered.push({
+                    title: article.title,
+                    url: article.url,
+                    source: article.source,
+                    date: new Date(articleDate).toISOString()
+                });
+            }
+        }
+        peopleArticles[person] = filtered.slice(0, 20);
+    }
+
+    return peopleArticles;
+}
+
+// Lấy ALL bài báo cho mỗi người trong 48 giờ - Chỉ fetch HTML 1 lần per source
+async function fetchArticlesForPeople(people) {
+    const sources = [
+        { url: 'https://kenh14.vn/star.chn', name: 'Kenh14', usePuppeteer: true },
+        { url: 'https://www.saostar.vn/giai-tri/', name: 'Saostar', usePuppeteer: false }
+    ];
+
+    const peopleArticles = {};
+    people.forEach(p => {
+        if (p) peopleArticles[p] = [];
+    });
+
+    // Fetch từ mỗi source CHỈ 1 LẦN
+    for (const src of sources) {
+        console.log(`📲 Đang fetch từ ${src.name}...`);
+        let html;
+        
+        if (src.usePuppeteer) {
+            html = await fetchWithPuppeteer(src.url);
+        } else {
+            html = await safeFetch(src.url);
+        }
+
+        // Parse HTML cho TẤT CẢ người cùng lúc
+        const articlesForAllPeople = await parseArticlesFromHTML(html, src.url, src.name, people);
+        
+        // Merge vào peopleArticles
+        for (const person of people) {
+            if (person && articlesForAllPeople[person]) {
+                peopleArticles[person].push(...articlesForAllPeople[person]);
+            }
         }
     }
 
-    return filtered.slice(0, 20);
-}
-
-// Lấy ALL bài báo cho mỗi người trong 48 giờ
-async function fetchArticlesForPeople(people) {
-    const sources = [
-        { url: 'https://kenh14.vn/star.chn', name: 'Kenh14' },
-        { url: 'https://www.saostar.vn/giai-tri/', name: 'Saostar' }
-    ];
-
-    const peopleArticles = [];
-
-    // Cho mỗi người, lấy TẤT CẢ bài báo từ các nguồn
+    // Sort theo ngày và limit top 10 cho mỗi person
+    const result = [];
     for (const person of people) {
         if (!person) continue;
 
-        const personArticles = [];
+        peopleArticles[person].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const topArticles = peopleArticles[person].slice(0, 10);
 
-        // Fetch từ tất cả nguồn
-        for (const src of sources) {
-            const articles = await scrapeArticlesFromSource(src.url, src.name, [person]);
-            personArticles.push(...articles);
-        }
-
-        // Sort theo ngày mới nhất, limit top 10
-        personArticles.sort((a, b) => new Date(b.date) - new Date(a.date));
-        const topArticles = personArticles.slice(0, 10);
-
-        peopleArticles.push({
+        result.push({
             person,
             articles: topArticles
         });
@@ -182,7 +295,7 @@ async function fetchArticlesForPeople(people) {
         console.log(`📄 ${person}: tìm được ${topArticles.length} bài báo`);
     }
 
-    return peopleArticles;
+    return result;
 }
 
 // Hàm chính: cập nhật toàn bộ trending data
