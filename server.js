@@ -369,10 +369,10 @@ app.post('/api/tts/convert', async (req, res) => {
             });
         }
 
-        if (text.length > 300) {
+        if (text.length > 50000) {
             return res.status(400).json({
                 success: false,
-                error: 'Văn bản không được vượt quá 300 ký tự'
+                error: 'Văn bản không được vượt quá 50000 ký tự'
             });
         }
 
