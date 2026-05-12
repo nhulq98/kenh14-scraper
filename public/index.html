@@ -592,7 +592,7 @@
             bottom: calc(100% + 8px);
             animation: dropdownSlideUp 0.2s ease;
         }
-        
+
         /* Buffer zone to keep dropdown hoverable for last 2 items */
         .people-item:last-child::after,
         .people-item:nth-last-child(2)::after {
@@ -874,6 +874,537 @@
             }
         }
 
+
+        /* Viettel TTS Section Styles - Multi-Step Form */
+        .tts-section {
+            grid-column: 1 / -1;
+        }
+
+        .tts-section .section-title::before {
+            background: #e03;
+        }
+
+        .tts-form {
+            display: grid;
+            gap: 15px;
+        }
+
+        /* Step Header - Hidden */
+        .step-header {
+            display: none;
+        }
+
+        /* Step Content - All Visible */
+        .step-content {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Step 1: Project Name */
+        .step-1-content {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .step-1-content label {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95em;
+        }
+
+        .project-select {
+            padding: 12px 15px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.95em;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .project-select:focus {
+            outline: none;
+            border-color: #e03;
+            box-shadow: 0 0 0 3px rgba(239, 83, 80, 0.1);
+        }
+
+        /* Step 2: Text Input */
+        .step-2-content {
+            display: flex;
+            flex-direction: column;
+            /* gap: 12px; */
+        }
+
+        .step-2-content label {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95em;
+        }
+
+        #ttsText {
+            width: 100%;
+            min-height: 200px;
+            padding: 12px 14px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+            resize: vertical;
+            transition: all 0.3s ease;
+            background: var(--bg-light);
+        }
+
+        #ttsText:focus {
+            outline: none;
+            border-color: #e03;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(239, 83, 80, 0.1);
+        }
+
+        .text-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-upload {
+            padding: 10px 16px;
+            border: 2px solid #e03;
+            background: white;
+            color: #000;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-upload:hover {
+            background: #e03;
+            color: white;
+        }
+
+        .char-count-display {
+            font-size: 0.85em;
+            color: #999;
+            padding: 8px 0;
+        }
+
+        .char-count-display strong {
+            color: #e03;
+            font-weight: 600;
+        }
+
+        /* Step 3: Voice Selection */
+        .step-3-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .step-3-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .voice-selection-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .voice-section-title {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 0.95em;
+        }
+
+        /* Region Selection */
+        .region-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .region-btn {
+            padding: 10px 16px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .region-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            color: #999;
+        }
+
+        .region-btn:hover {
+            border-color: #e03;
+            color: #e03;
+        }
+
+        .region-btn.active {
+            background: #e03;
+            color: white;
+            border-color: #e03;
+        }
+
+        /* Voice Options Grid */
+        .voice-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding: 8px;
+            background: #fafafa;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        @media (max-width: 1024px) {
+            .voice-options {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .voice-options {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .voice-option {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .voice-option:hover {
+            border-color: #e03;
+            background: #FBE9E9;
+        }
+
+        .voice-option input[type="radio"] {
+            cursor: pointer;
+            accent-color: #e03;
+            width: 14px;
+            height: 14px;
+        }
+
+        .voice-option label {
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 500;
+            margin: 0;
+            max-width: 60px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .voice-option input[type="radio"]:checked + label {
+            font-weight: 700;
+            color: #e03;
+        }
+
+        /* Speed Adjustment Panel */
+        .speed-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .speed-label {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 0.95em;
+        }
+
+        .speed-slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #speedSelect {
+            flex: 1;
+            padding: 10px 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9em;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        #speedSelect::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #e03;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        #speedSelect::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #e03;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        #speedSelect::-webkit-slider-runnable-track {
+            background: linear-gradient(to right, #e03 0%, #e03 var(--speed-percentage, 50%), #ddd var(--speed-percentage, 50%), #ddd 100%);
+            height: 6px;
+            border-radius: 3px;
+        }
+
+        #speedSelect::-moz-range-track {
+            background: #ddd;
+            height: 6px;
+            border-radius: 3px;
+            border: none;
+        }
+
+        #speedSelect:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(239, 83, 80, 0.1);
+        }
+
+        .speed-value {
+            min-width: 60px;
+            text-align: center;
+            font-weight: 700;
+            color: #e03;
+            background: #FBE9E9;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+
+        .speed-buttons-container {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .speed-btn {
+            padding: 8px 14px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            min-width: 55px;
+        }
+
+        .speed-btn:hover {
+            border-color: #e03;
+            color: #e03;
+        }
+
+        .speed-btn.active {
+            background: #e03;
+            color: white;
+            border-color: #e03;
+        }
+
+        /* Action Buttons */
+        .tts-action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn-read {
+            padding: 14px 20px;
+            background: white;
+            color: #000;
+            border: 2px solid #e03;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-read:hover:not(:disabled) {
+            background: #e03;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(239, 83, 80, 0.3);
+        }
+
+        .btn-read:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .btn-upload:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .btn-upload:hover:not(:disabled) {
+            background: #e03;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(239, 83, 80, 0.3);
+        }
+
+        .btn-detect {
+            padding: 14px 20px;
+            background: white;
+            color: #000;
+            border: 2px solid #e03;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: none;
+        }
+
+        .btn-detect:hover:not(:disabled) {
+            background: #e03;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(239, 83, 80, 0.3);
+        }
+
+        .btn-detect:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Audio Player */
+        .audio-player {
+            background: linear-gradient(135deg, #f8f9fa 0%, #f0f4f8 100%);
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 15px;
+            display: none;
+            border: 2px solid #e0e0e0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .audio-player.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .audio-player audio {
+            width: 100%;
+            height: 50px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .audio-info {
+            font-size: 0.85em;
+            color: #666;
+            text-align: center;
+            padding: 8px 0;
+        }
+
+        .download-button-wrapper {
+            margin-top: 10px;
+            display: none;
+        }
+
+        .download-button-wrapper.show {
+            display: block;
+        }
+
+        .btn-download-audio {
+            width: 100%;
+            padding: 12px 16px;
+            background: white;
+            color: #000;
+            border: 2px solid #e03;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-download-audio:hover:not(:disabled) {
+            background: #e03;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(239, 83, 80, 0.3);
+        }
+
+        .btn-download-audio:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Status Messages */
+        .tts-status {
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            margin-top: 12px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tts-status.show {
+            display: block;
+        }
+
+        .tts-status.success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid var(--success);
+        }
+
+        .tts-status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid var(--error);
+        }
+
+        .tts-status.loading {
+            background: #dbeafe;
+            color: #0c2340;
+            border-left: 4px solid var(--accent);
+        }
     </style>
 </head>
 
@@ -989,6 +1520,127 @@
                     <div class="info-box" style="background: #f3e5f5; border-color: var(--gemini); color: #6a1b9a;">
                         <strong>🎯 Format TikTok:</strong>
                         3 đoạn văn (mở-thân-kết), mỗi đoạn 3 dòng, phù hợp cho nội dung tin ngắn
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Viettel TTS Section - Multi-Step Form -->
+        <div class="section tts-section">
+            <div class="section-title">🔊 Viettel Text-to-Speech</div>
+
+            <div class="tts-form">
+                <!-- Step Indicators -->
+                <div class="step-header">
+                    <div class="step-indicator active" id="step1Indicator">
+                        <div class="step-number">1</div>
+                        <span>Tên Dự Án</span>
+                    </div>
+                    <div class="step-indicator" id="step2Indicator">
+                        <div class="step-number">2</div>
+                        <span>Nhập Văn Bản</span>
+                    </div>
+                    <div class="step-indicator" id="step3Indicator">
+                        <div class="step-number">3</div>
+                        <span>Chọn Giọng Đọc</span>
+                    </div>
+                </div>
+
+                <!-- Step 1: Project Name -->
+                <!-- <div class="step-content active" id="step1">
+                    <div class="step-1-content">
+                        <label for="projectSelect">Tên dự án</label>
+                        <select id="projectSelect" class="project-select">
+                            <option value="default">Default</option>
+                            <option value="project1">Project 1</option>
+                            <option value="project2">Project 2</option>
+                            <option value="project3">Project 3</option>
+                        </select>
+                    </div>
+                </div> -->
+
+                <!-- Step 2: Text Input -->
+                <div class="step-content" id="step2">
+                    <div class="step-2-content">
+                        <label for="ttsText">Nhập nội dung văn bản Tiếng Việt</label>
+                        <textarea
+                            id="ttsText"
+                            placeholder="Dán hoặc nhập văn bản tiếng Việt tối đa 50,000 ký tự..."
+                        ></textarea>
+                        <div class="char-count-display">
+                            <span id="ttsCharCount">0</span> / 50000 kỳ tự
+                            <div class="tts-status" id="ttsStatus"></div>
+                        </div>
+                        <div class="text-controls">
+                            <button class="btn-upload" id="uploadWordsBtn" disabled>
+                                Upload file words
+                            </button>
+                            <button class="btn-secondary" id="copyFromContentBtn">
+                                Copy từ Nội Dung Tóm Tắt
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Voice Selection & Speed -->
+                <div class="step-content" id="step3">
+                    <div class="step-3-content">
+                        <!-- Voice Selection Panel -->
+                        <div class="voice-selection-panel">
+                            <div class="voice-section-title">Chọn giọng đọc</div>
+
+                            <!-- Region Selection -->
+                            <div class="region-buttons" id="regionButtons">
+                                <button class="region-btn active" data-region="north">Miền Bắc</button>
+                                <button class="region-btn" data-region="central" disabled>Miền Trung</button>
+                                <button class="region-btn" data-region="south" disabled>Miền Nam</button>
+                            </div>
+
+                            <!-- Voice Options -->
+                            <div class="voice-options" id="voiceOptions">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- Speed Adjustment Panel -->
+                        <div class="speed-panel">
+                            <div class="voice-section-title">Thay đổi tốc độ đọc</div>
+                            <div class="speed-slider-container">
+                                <input type="range" id="speedSelect" min="0.8" max="1.2" step="0.1" value="1" style="flex: 1;">
+                                <div class="speed-value" id="speedValue">1</div>
+                            </div>
+                            <div class="speed-buttons-container" id="speedButtons">
+                                <button class="speed-btn" data-speed="0.8">0.8</button>
+                                <button class="speed-btn" data-speed="0.9">0.9</button>
+                                <button class="speed-btn active" data-speed="1">1</button>
+                                <button class="speed-btn" data-speed="1.1">1.1</button>
+                                <button class="speed-btn" data-speed="1.2">1.2</button>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="tts-action-buttons">
+                                <button class="btn-read" id="convertBtn">
+                                    Đọc Văn Bản
+                                </button>
+                                <button class="btn-detect" id="detectBtn">
+                                    Phát Hiện Âm Tiết
+                                </button>
+                            </div>
+
+                            <!-- Audio Player -->
+                            <div class="audio-player" id="audioPlayer">
+                                <audio id="audioElement" controls></audio>
+                                <div class="audio-info">✓ Âm thanh đã sẵn sàng</div>
+                            </div>
+
+                            <!-- Download Button -->
+                            <div class="download-button-wrapper" id="downloadWrapper">
+                                <button class="btn-download-audio" id="downloadBtn">
+                                    Tải Xuống MP3
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1215,7 +1867,7 @@
             }
             const rankClasses = ['rank-1', 'rank-2', 'rank-3', 'rank-4', 'rank-5', 'rank-6', 'rank-7'];
             const medals = ['🥇', '🥈', '🥉', '4', '5', '6', '7'];
-            
+
             list.innerHTML = people
                 .filter(p => p && (p.name || p))
                 .slice(0, 7)
@@ -1223,7 +1875,7 @@
                     const name = item.name || item;
                     const stats = item.stats || {};
                     const articles = item.articles || [];
-                    
+
                     // Tạo HTML dropdown articles
                     const articlesHtml = articles.length > 0
                         ? articles.map(a => `
@@ -1238,7 +1890,7 @@
                             </li>
                         `).join('')
                         : '<li style="padding:8px;color:var(--text-secondary);font-size:0.58em;text-align:center;">Chưa có bài viết</li>';
-                    
+
                     return `
                     <li class="people-item">
                         <div class="rank-badge ${rankClasses[i]}">${medals[i]}</div>
@@ -1255,7 +1907,7 @@
                         </div>
                     </li>`
                 }).join('');
-            
+
             // Attach dropdown hover listeners
             attachDropdownListeners();
         }
@@ -1265,11 +1917,11 @@
             peopleItems.forEach(item => {
                 const dropdown = item.querySelector('.articles-dropdown');
                 if (!dropdown) return;
-                
+
                 let hoverTimeout;
                 let isHoveringItem = false;
                 let isHoveringDropdown = false;
-                
+
                 function updateDropdownState() {
                     if (isHoveringItem || isHoveringDropdown) {
                         dropdown.classList.add('active');
@@ -1280,25 +1932,25 @@
                         }, 50);
                     }
                 }
-                
+
                 // When mouse enters the people-item
                 item.addEventListener('mouseenter', () => {
                     isHoveringItem = true;
                     updateDropdownState();
                 });
-                
+
                 // When mouse leaves the people-item
                 item.addEventListener('mouseleave', () => {
                     isHoveringItem = false;
                     updateDropdownState();
                 });
-                
+
                 // When mouse enters the dropdown
                 dropdown.addEventListener('mouseenter', () => {
                     isHoveringDropdown = true;
                     updateDropdownState();
                 });
-                
+
                 // When mouse leaves the dropdown
                 dropdown.addEventListener('mouseleave', () => {
                     isHoveringDropdown = false;
@@ -1357,7 +2009,7 @@
                 buttonOrEvent.preventDefault();
                 button = buttonOrEvent.target;
             }
-            
+
             navigator.clipboard.writeText(url).then(() => {
                 const originalText = button.innerHTML;
                 button.innerHTML = '✅ Đã copy!';
@@ -1378,6 +2030,330 @@
 
         // Auto-refresh removed - only runs at 9 AM daily or manual refresh
         // setInterval(loadTrending, 15 * 60 * 1000);
+
+        // ==================== VIETTEL TTS SECTION ====================
+        const ttsText = document.getElementById('ttsText');
+        const ttsCharCount = document.getElementById('ttsCharCount');
+        const speedSelect = document.getElementById('speedSelect');
+        const speedValue = document.getElementById('speedValue');
+        const convertBtn = document.getElementById('convertBtn');
+        const detectBtn = document.getElementById('detectBtn');
+        const uploadWordsBtn = document.getElementById('uploadWordsBtn');
+        const copyFromContentBtn = document.getElementById('copyFromContentBtn');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const audioElement = document.getElementById('audioElement');
+        const ttsStatus = document.getElementById('ttsStatus');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const downloadWrapper = document.getElementById('downloadWrapper');
+
+        // Voice selection
+        const regionButtons = document.getElementById('regionButtons');
+        const voiceOptions = document.getElementById('voiceOptions');
+
+        // Voice data by region
+        const voiceData = {
+            north: [
+                { id: 'hn-quynhanh', name: 'Quỳnh Anh', gender: 'Nữ' },
+                { id: 'hn-phuongtrang', name: 'Phương Trăng', gender: 'Nữ' },
+                { id: 'hn-thaochi', name: 'Thảo Chi', gender: 'Nữ' },
+                { id: 'hn-thanhha', name: 'Thạnh Hà', gender: 'Nữ' },
+                { id: 'hn-thanhphuong', name: 'Thạnh Phương', gender: 'Nữ' },
+                { id: 'hn-thanhtung', name: 'Thạnh Tùng', gender: 'Nam' },
+                { id: 'hn-namkhanh', name: 'Nam Khánh', gender: 'Nam' },
+                { id: 'hn-tienquan', name: 'Tiến Quân', gender: 'Nam' }
+            ],
+            central: [
+                { id: 'hue-maingoc', name: 'Mai Ngọc', gender: 'Nữ' },
+                { id: 'hue-baoquoc', name: 'Bảo Quốc', gender: 'Nam' }
+            ],
+            south: [
+                { id: 'hcm-diemmy', name: 'Diễm My', gender: 'Nữ' },
+                { id: 'hcm-phuongly', name: 'Phương Ly', gender: 'Nữ' },
+                { id: 'hcm-thuydung', name: 'Thủy Dung', gender: 'Nữ' },
+                { id: 'hcm-thuyduyen', name: 'Thủy Duyên', gender: 'Nữ' },
+                { id: 'hcm-leyen', name: 'Lệ Yên', gender: 'Nữ' },
+                { id: 'hcm-minhquan', name: 'Minh Quân', gender: 'Nam' }
+            ]
+        };
+
+        let selectedVoice = 'hn-quynhanh';
+        let selectedRegion = 'north';
+        let audioBlob = null;
+        let audioUrl = null;
+
+        // Local Storage Settings Management
+        const STORAGE_KEY = 'tts_settings';
+
+        function saveSettings() {
+            const settings = {
+                voice: selectedVoice,
+                region: selectedRegion,
+                speed: speedSelect.value
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    const settings = JSON.parse(saved);
+                    selectedRegion = settings.region || 'north';
+                    selectedVoice = settings.voice || 'hn-quynhanh';
+
+                    // Render voice options for saved region
+                    renderVoiceOptions(selectedRegion);
+
+                    // Update region buttons
+                    document.querySelectorAll('.region-btn').forEach(btn => {
+                        if (btn.dataset.region === selectedRegion) {
+                            btn.classList.add('active');
+                        } else {
+                            btn.classList.remove('active');
+                        }
+                    });
+
+                    // Set speed
+                    speedSelect.value = settings.speed || '1';
+                    updateSpeedValue();
+
+                    // Set radio button for voice
+                    const voiceRadios = document.querySelectorAll('input[name="voice"]');
+                    voiceRadios.forEach(radio => {
+                        if (radio.value === selectedVoice) {
+                            radio.checked = true;
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error loading settings:', error);
+                }
+            }
+        }
+
+        // Event Listeners for TTS
+        ttsText.addEventListener('input', () => {
+            updateTtsCharCount();
+            updateButtonStates();
+        });
+        convertBtn.addEventListener('click', convertToSpeech);
+        detectBtn.addEventListener('click', detectSpecialSyllables);
+        uploadWordsBtn.addEventListener('click', () => alert('Upload file feature coming soon'));
+        copyFromContentBtn.addEventListener('click', copyFromContent);
+        speedSelect.addEventListener('input', updateSpeedValue);
+        downloadBtn.addEventListener('click', downloadAudio);
+
+        // Region button clicks
+        regionButtons.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('region-btn') && !e.target.disabled) {
+                selectedRegion = e.target.dataset.region;
+                renderVoiceOptions(selectedRegion);
+                // Reset selected voice to first voice of new region
+                const voices = voiceData[selectedRegion] || [];
+                if (voices.length > 0) {
+                    selectedVoice = voices[0].id;
+                }
+            }
+        });
+
+        // Speed buttons clicks
+        document.getElementById('speedButtons').addEventListener('click', (e) => {
+            if (e.target.classList.contains('speed-btn')) {
+                document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                const speed = e.target.dataset.speed;
+                speedSelect.value = speed;
+                updateSpeedValue();
+            }
+        });
+
+        function updateButtonStates() {
+            const hasText = ttsText.value.trim().length > 0;
+            convertBtn.disabled = !hasText;
+            detectBtn.disabled = !hasText;
+        }
+
+        function renderVoiceOptions(region) {
+            voiceOptions.innerHTML = '';
+            const voices = voiceData[region] || [];
+
+            voices.forEach((voice, index) => {
+                const label = document.createElement('label');
+                label.className = 'voice-option';
+                label.style.cursor = 'pointer';
+
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = 'voice';
+                radio.value = voice.id;
+                radio.checked = index === 0;
+                radio.addEventListener('change', () => {
+                    selectedVoice = voice.id;
+                });
+
+                const labelText = document.createElement('label');
+                labelText.textContent = `${voice.name} (${voice.gender})`;
+                labelText.style.cursor = 'pointer';
+
+                // Make the entire label clickable
+                label.addEventListener('click', (e) => {
+                    if (e.target !== radio) {
+                        radio.checked = true;
+                        radio.dispatchEvent(new Event('change'));
+                    }
+                });
+
+                label.appendChild(radio);
+                label.appendChild(labelText);
+                voiceOptions.appendChild(label);
+            });
+        }
+
+        function updateTtsCharCount() {
+            const length = ttsText.value.length;
+            ttsCharCount.textContent = length;
+
+            if (length > 50000) {
+                ttsText.value = ttsText.value.substring(0, 50000);
+                ttsCharCount.textContent = '50000';
+            }
+        }
+
+        function updateSpeedValue() {
+            const value = speedSelect.value;
+            speedValue.textContent = value;
+            const percentage = ((value - 0.8) / 0.4) * 100;
+            speedSelect.style.setProperty('--speed-percentage', percentage + '%');
+
+            // Update speed buttons
+            document.querySelectorAll('.speed-btn').forEach(btn => {
+                if (btn.dataset.speed === value) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        function copyFromContent() {
+            if (!geminiOutput.value) {
+                showTtsStatus('error', '❌ Chưa có nội dung để copy');
+                return;
+            }
+
+            const content = geminiOutput.value.substring(0, 50000);
+            ttsText.value = content;
+            updateTtsCharCount();
+            updateButtonStates();
+            showTtsStatus('success', '✅ Đã copy nội dung!');
+            setTimeout(() => ttsStatus.classList.remove('show'), 2000);
+        }
+
+        async function convertToSpeech() {
+            const text = ttsText.value.trim();
+
+            if (!text) {
+                showTtsStatus('error', '❌ Vui lòng nhập văn bản');
+                return;
+            }
+
+            if (text.length > 50000) {
+                showTtsStatus('error', '❌ Văn bản không được vượt quá 50,000 ký tự');
+                return;
+            }
+
+            // Save current settings before converting
+            saveSettings();
+
+            convertBtn.disabled = true;
+            detectBtn.disabled = true;
+            showTtsStatus('loading', '<span class="spinner"></span>Đang chuyển đổi thành âm thanh...');
+
+            try {
+                const response = await fetch('/api/tts/convert', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: text,
+                        voice: selectedVoice,
+                        speed: parseFloat(speedSelect.value)
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Lỗi khi chuyển đổi');
+                }
+
+                audioBlob = await response.blob();
+                audioUrl = URL.createObjectURL(audioBlob);
+                audioElement.src = audioUrl;
+                audioPlayer.classList.add('show');
+                downloadWrapper.classList.add('show');
+                showTtsStatus('success', '✅ Chuyển đổi thành công!');
+
+            } catch (error) {
+                console.error('Error:', error);
+                showTtsStatus('error', '❌ Lỗi: ' + error.message);
+                audioPlayer.classList.remove('show');
+                downloadWrapper.classList.remove('show');
+            } finally {
+                updateButtonStates();
+            }
+        }
+
+        function detectSpecialSyllables() {
+            const text = ttsText.value.trim();
+            if (!text) {
+                showTtsStatus('error', '❌ Vui lòng nhập văn bản');
+                return;
+            }
+            showTtsStatus('loading', '🔍 Phát hiện âm tiết đặc biệt...');
+            // Add your detection logic here
+            setTimeout(() => {
+                showTtsStatus('success', '✅ Hoàn thành phát hiện âm tiết đặc biệt');
+                setTimeout(() => ttsStatus.classList.remove('show'), 2000);
+            }, 1000);
+        }
+
+        function downloadAudio() {
+            if (!audioBlob) {
+                showTtsStatus('error', '❌ Chưa có âm thanh để tải');
+                return;
+            }
+
+            const timestamp = new Date().toLocaleTimeString('vi-VN').replace(/:/g, '-');
+            const filename = `audio_${timestamp}.mp3`;
+
+            const downloadLink = document.createElement('a');
+            downloadLink.href = audioUrl;
+            downloadLink.download = filename;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+
+            showTtsStatus('success', `✅ Đã tải "${filename}"`);
+            setTimeout(() => ttsStatus.classList.remove('show'), 1500);
+        }
+
+        function showTtsStatus(type, message) {
+            ttsStatus.className = `tts-status show ${type}`;
+            ttsStatus.innerHTML = message;
+        }
+
+        // Initialize voice options
+        renderVoiceOptions('north');
+        updateSpeedValue();
+        updateButtonStates();
+
+        // Load saved settings from localStorage
+        loadSettings();
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (audioUrl) {
+                URL.revokeObjectURL(audioUrl);
+            }
+        });
     </script>
 </body>
 
