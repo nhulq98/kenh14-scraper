@@ -521,6 +521,12 @@
             transition: all 0.3s ease;
         }
 
+        .region-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            color: #999;
+        }
+
         .region-btn:hover {
             border-color: #e03;
             color: #e03;
@@ -555,6 +561,8 @@
             background: white;
             cursor: pointer;
             transition: all 0.3s ease;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .voice-option:hover {
@@ -574,6 +582,9 @@
             font-size: 11px;
             font-weight: 500;
             margin: 0;
+            max-width: 60px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         .voice-option input[type="radio"]:checked + label {
@@ -996,6 +1007,7 @@
                         ></textarea>
                         <div class="char-count-display">
                             <span id="ttsCharCount">0</span> / 50000 kỳ tự
+                            <div class="tts-status" id="ttsStatus"></div>
                         </div>
                         <div class="text-controls">
                             <button class="btn-upload" id="uploadWordsBtn" disabled>
@@ -1004,6 +1016,7 @@
                             <button class="btn-secondary" id="copyFromContentBtn">
                                 Copy từ Nội Dung Tóm Tắt
                             </button>
+                            
                         </div>
                     </div>
                 </div>
@@ -1018,8 +1031,8 @@
                             <!-- Region Selection -->
                             <div class="region-buttons" id="regionButtons">
                                 <button class="region-btn active" data-region="north">Miền Bắc</button>
-                                <button class="region-btn" data-region="central">Miền Trung</button>
-                                <button class="region-btn" data-region="south">Miền Nam</button>
+                                <button class="region-btn" data-region="central" disabled>Miền Trung</button>
+                                <button class="region-btn" data-region="south" disabled>Miền Nam</button>
                             </div>
 
                             <!-- Voice Options -->
@@ -1065,9 +1078,6 @@
                                     Tải Xuống MP3
                                 </button>
                             </div>
-
-                            <!-- Status -->
-                            <div class="tts-status" id="ttsStatus"></div>
                         </div>
                     </div>
                 </div>
@@ -1307,9 +1317,7 @@
         
         // Region button clicks
         regionButtons.addEventListener('click', (e) => {
-            if (e.target.classList.contains('region-btn')) {
-                document.querySelectorAll('.region-btn').forEach(btn => btn.classList.remove('active'));
-                e.target.classList.add('active');
+                    if (e.target.classList.contains('region-btn') && !e.target.disabled) {
                 selectedRegion = e.target.dataset.region;
                 renderVoiceOptions(selectedRegion);
                 // Reset selected voice to first voice of new region
@@ -1344,6 +1352,7 @@
             voices.forEach((voice, index) => {
                 const label = document.createElement('label');
                 label.className = 'voice-option';
+                label.style.cursor = 'pointer';
                 
                 const radio = document.createElement('input');
                 radio.type = 'radio';
@@ -1356,6 +1365,15 @@
                 
                 const labelText = document.createElement('label');
                 labelText.textContent = `${voice.name} (${voice.gender})`;
+                labelText.style.cursor = 'pointer';
+                
+                // Make the entire label clickable
+                label.addEventListener('click', (e) => {
+                    if (e.target !== radio) {
+                        radio.checked = true;
+                        radio.dispatchEvent(new Event('change'));
+                    }
+                });
                 
                 label.appendChild(radio);
                 label.appendChild(labelText);
