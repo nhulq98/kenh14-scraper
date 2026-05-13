@@ -2,12 +2,77 @@ const cheerio = require('cheerio');
 const { safeFetch, extractArticleDate } = require('./scraper');
 const { generateSummaryWithRetry } = require('./gemini');
 const { getPeopleStats } = require('./stats');
+const fs = require('fs').promises;
+const path = require('path');
 
-// In-memory cache
+// Cache file path
+const CACHE_DIR = path.join(__dirname, '../cache');
+const CACHE_FILE = path.join(CACHE_DIR, 'trending.cache.json');
+const CACHE_EXPIRE_TIME = 24 * 60 * 60 * 1000; // 1 day in milliseconds
+
+// In-memory cache (fallback)
 let trendingCache = {
     people: [],
     updatedAt: null
 };
+
+// Tạo thư mục cache nếu chưa tồn tại
+async function ensureCacheDir() {
+    try {
+        await fs.mkdir(CACHE_DIR, { recursive: true });
+    } catch (err) {
+        console.warn('⚠️  Không thể tạo thư mục cache:', err.message);
+    }
+}
+
+// Lưu cache vào file
+async function saveCacheToFile(cacheData) {
+    try {
+        await ensureCacheDir();
+        await fs.writeFile(CACHE_FILE, JSON.stringify(cacheData, null, 2));
+        console.log('💾 Cache đã được lưu vào file');
+    } catch (err) {
+        console.warn('⚠️  Không thể lưu cache vào file:', err.message);
+    }
+}
+
+// Kiểm tra cache file có hợp lệ hay không (chưa hết hạn)
+async function isValidCacheFile() {
+    try {
+        const stats = await fs.stat(CACHE_FILE);
+        const fileAge = Date.now() - stats.mtimeMs;
+        return fileAge < CACHE_EXPIRE_TIME;
+    } catch (err) {
+        // File không tồn tại hoặc lỗi khác
+        return false;
+    }
+}
+
+// Đọc cache từ file
+async function readCacheFromFile() {
+    try {
+        const isValid = await isValidCacheFile();
+        if (isValid) {
+            const data = await fs.readFile(CACHE_FILE, 'utf-8');
+            const cache = JSON.parse(data);
+            console.log('📖 Cache đã được đọc từ file');
+            return cache;
+        }
+    } catch (err) {
+        console.warn('⚠️  Không thể đọc cache từ file:', err.message);
+    }
+    return null;
+}
+
+// Xóa cache file cũ
+async function deleteCacheFile() {
+    try {
+        await fs.unlink(CACHE_FILE);
+        console.log('🗑️  Cache file cũ đã bị xóa');
+    } catch (err) {
+        // File không tồn tại là bình thường
+    }
+}
 
 // Scrape tiêu đề bài viết từ Kenh14 star page
 async function scrapeKenh14Headlines() {
@@ -245,14 +310,24 @@ async function updateTrendingData() {
             updatedAt: new Date().toISOString()
         };
 
+        // Lưu cache vào file
+        await saveCacheToFile(trendingCache);
+
         console.log('✅ Trending data đã cập nhật thành công!');
     } catch (err) {
         console.error('❌ Lỗi cập nhật trending:', err.message);
     }
 }
 
-// Lấy cache hiện tại
-function getTrendingCache() {
+// Lấy cache hiện tại (từ file nếu có, không thì dùng memory)
+async function getTrendingCache() {
+    // Cố gắng đọc từ file trước
+    const fileCache = await readCacheFromFile();
+    if (fileCache) {
+        return fileCache;
+    }
+    
+    // Nếu file cache không có hoặc hết hạn, trả về in-memory cache
     return trendingCache;
 }
 

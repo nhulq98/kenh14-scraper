@@ -170,16 +170,16 @@ app.post('/api/summarize', async (req, res) => {
 
 app.get('/api/trending', async (req, res) => {
     // Nếu cache trống thì fetch ngay
-    const cache = getTrendingCache();
+    const cache = await getTrendingCache();
     if (!cache.updatedAt) {
         await updateTrendingData();
     }
-    res.json({ success: true, ...getTrendingCache() });
+    res.json({ success: true, ...(await getTrendingCache()) });
 });
 
 app.post('/api/trending/refresh', async (req, res) => {
     await updateTrendingData();
-    res.json({ success: true, ...getTrendingCache() });
+    res.json({ success: true, ...(await getTrendingCache()) });
 });
 
 // ============================================================
