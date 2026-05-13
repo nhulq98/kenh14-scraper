@@ -17,9 +17,13 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 dotenv.config();
 
 // Import services and utilities
-const { scrapeArticle } = require('./services/scraper');
-const { generateSummaryWithRetry } = require('./services/gemini');
-const { updateTrendingData, getTrendingCache } = require('./services/trending');
+const ScraperService = require('./src/services/scraper.service');
+const scrapeArticle = ScraperService.scrapeArticle.bind(ScraperService);
+const GeminiService = require('./src/services/gemini.service');
+const generateSummaryWithRetry = GeminiService.generateSummaryWithRetry.bind(GeminiService);
+const trendingService = require('./src/services/trending.service');
+const updateTrendingData = trendingService.updateTrendingData.bind(trendingService);
+const getTrendingCache = trendingService.getTrendingCache.bind(trendingService);
 const { getErrorMessage, isRateLimitOrHighDemandError } = require('./utils/helpers');
 
 const app = express();
@@ -30,7 +34,102 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Serve HTML file
+// ============================================================
+// AUTHENTICATION ROUTES
+// ============================================================
+
+// Load authentication service
+const AuthController = require('./src/controllers/auth.controller');
+
+// Login endpoint
+app.post('/api/auth/login', (req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        // Validate input
+        if (!username || !password) {
+            return res.status(400).json({
+                success: false,
+                message: 'Username và password là bắt buộc'
+            });
+        }
+
+        const result = AuthController.handleLogin(username, password);
+
+        if (result.success) {
+            res.json({
+                success: true,
+                message: result.message,
+                user: result.user
+            });
+        } else {
+            res.status(401).json({
+                success: false,
+                message: result.message
+            });
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi server khi đăng nhập'
+        });
+    }
+});
+
+// Logout endpoint
+app.post('/api/auth/logout', (req, res) => {
+    try {
+        const result = AuthController.handleLogout();
+        res.json({
+            success: true,
+            message: result.message
+        });
+    } catch (error) {
+        console.error('Logout error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi server khi đăng xuất'
+        });
+    }
+});
+
+// Check authentication status
+app.get('/api/auth/check', (req, res) => {
+    try {
+        const isAuthenticated = AuthController.isAuthenticated();
+        const user = AuthController.getCurrentUser();
+
+        res.json({
+            success: true,
+            isAuthenticated: isAuthenticated,
+            user: user
+        });
+    } catch (error) {
+        console.error('Auth check error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi server khi kiểm tra authentication'
+        });
+    }
+});
+
+// Serve login page
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'src', 'views', 'auth', 'html', 'login.html'));
+});
+
+// Serve login CSS
+app.get('/auth/css/login.css', (req, res) => {
+    res.sendFile(path.join(__dirname, 'src', 'views', 'auth', 'css', 'login.css'));
+});
+
+// Serve login JS
+app.get('/auth/js/login.js', (req, res) => {
+    res.sendFile(path.join(__dirname, 'src', 'views', 'auth', 'js', 'login.js'));
+});
+
+// Serve HTML file (Main Dashboard)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

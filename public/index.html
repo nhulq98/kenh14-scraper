@@ -1410,6 +1410,121 @@
 </head>
 
 <body>
+    <!-- Auth Check Script -->
+    <script>
+        // Check authentication on page load - Direct localStorage check
+        function checkAuthentication() {
+            const storedUser = localStorage.getItem('auth_user');
+            if (!storedUser) {
+                // Not authenticated, redirect to login
+                window.location.href = '/login';
+                return;
+            }
+
+            try {
+                const user = JSON.parse(storedUser);
+                if (!user.isAuthenticated || !user.username) {
+                    // Invalid session, redirect to login
+                    window.location.href = '/login';
+                    return;
+                }
+
+                // User is authenticated, add user info UI
+                addUserInfoUI(user);
+            } catch (error) {
+                console.error('Error parsing stored user:', error);
+                localStorage.removeItem('auth_user');
+                window.location.href = '/login';
+            }
+        }
+
+        function addUserInfoUI(user) {
+            // Add user info div
+            const userInfoDiv = document.createElement('div');
+            userInfoDiv.id = 'userInfo';
+            userInfoDiv.innerHTML = `
+                <span>👤 ${user.username}</span>
+                <button id="logoutBtn" class="btn-logout">Đăng Xuất</button>
+            `;
+
+            // Add styles for user info
+            const style = document.createElement('style');
+            style.textContent = `
+                #userInfo {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    background: white;
+                    padding: 10px 16px;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                    font-size: 0.95em;
+                    z-index: 1000;
+                }
+
+                #userInfo span {
+                    color: var(--text-primary);
+                    font-weight: 500;
+                }
+
+                .btn-logout {
+                    padding: 8px 14px;
+                    background: linear-gradient(135deg, var(--primary), #ff6b7f);
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    font-size: 0.85em;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+
+                .btn-logout:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 16px rgba(255, 70, 85, 0.3);
+                }
+
+                .btn-logout:active {
+                    transform: translateY(0);
+                }
+
+                @media (max-width: 768px) {
+                    #userInfo {
+                        top: auto;
+                        bottom: 20px;
+                        right: 20px;
+                        flex-direction: column;
+                    }
+                }
+            `;
+
+            document.head.appendChild(style);
+            document.body.appendChild(userInfoDiv);
+
+            // Add logout handler
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+                    logout();
+                }
+            });
+        }
+
+        function logout() {
+            localStorage.removeItem('auth_user');
+            window.location.href = '/login';
+        }
+
+        // Check auth when page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', checkAuthentication);
+        } else {
+            checkAuthentication();
+        }
+    </script>
+
     <div class="container">
         <div class="header">
             <h1>
