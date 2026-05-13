@@ -1,0 +1,8 @@
+{
+  "::ffff:127.0.0.1": {
+    "attempts": 1,
+    "firstAttemptTime": 1778644355357,
+    "violationCount": 0,
+    "lastAttemptTime": 1778644355357
+  }
+}

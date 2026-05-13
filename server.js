@@ -30,7 +30,139 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Serve HTML file
+// ============================================================
+// AUTHENTICATION ROUTES
+// ============================================================
+
+// Load authentication service
+const AuthController = require('./src/controllers/auth.controller');
+const rateLimitService = require('./src/services/rate-limit.service');
+
+// Login endpoint
+app.post('/api/auth/login', (req, res) => {
+    try {
+        const { username, password } = req.body;
+        const clientIP = req.headers['x-forwarded-for']?.split(',')[0].trim() || 
+                        req.socket.remoteAddress || 
+                        'unknown';
+
+        console.log(`🔐 Login attempt from IP: ${clientIP}`);
+
+        // Validate input
+        if (!username || !password) {
+            return res.status(400).json({
+                success: false,
+                message: 'Username và password là bắt buộc'
+            });
+        }
+
+        // Check rate limit
+        const lockoutStatus = rateLimitService.checkLockout(clientIP);
+        if (lockoutStatus.isLocked) {
+            const minutes = Math.ceil(lockoutStatus.remainingTime / 60);
+            return res.status(429).json({
+                success: false,
+                message: `Tài khoản bị khóa do nhiều lần đăng nhập sai. Vui lòng thử lại sau ${minutes} phút.`,
+                locked: true,
+                remainingTime: lockoutStatus.remainingTime,
+                violationCount: lockoutStatus.violationCount
+            });
+        }
+
+        // Handle login
+        const result = AuthController.handleLogin(username, password);
+
+        if (result.success) {
+            // Clear failed attempts on successful login
+            rateLimitService.clearAttempts(clientIP);
+            
+            res.json({
+                success: true,
+                message: result.message,
+                user: result.user
+            });
+        } else {
+            // Record failed attempt
+            const failureStatus = rateLimitService.recordFailedAttempt(clientIP);
+            
+            let errorMessage = result.message;
+            if (failureStatus.isLocked) {
+                const minutes = Math.ceil(failureStatus.remainingTime / 60);
+                const violationNum = failureStatus.violationCount;
+                errorMessage = `Sai thông tin đăng nhập 6 lần. Tài khoản bị khóa trong ${minutes} phút (lần vi phạm thứ ${violationNum})`;
+            } else if (failureStatus.attemptRemaining !== undefined) {
+                errorMessage = `${result.message} (Còn ${failureStatus.attemptRemaining} lần thử)`;
+            }
+
+            res.status(401).json({
+                success: false,
+                message: errorMessage,
+                attemptRemaining: failureStatus.attemptRemaining,
+                locked: failureStatus.isLocked
+            });
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi server khi đăng nhập'
+        });
+    }
+});
+
+// Logout endpoint
+app.post('/api/auth/logout', (req, res) => {
+    try {
+        const result = AuthController.handleLogout();
+        res.json({
+            success: true,
+            message: result.message
+        });
+    } catch (error) {
+        console.error('Logout error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi server khi đăng xuất'
+        });
+    }
+});
+
+// Check authentication status
+app.get('/api/auth/check', (req, res) => {
+    try {
+        const isAuthenticated = AuthController.isAuthenticated();
+        const user = AuthController.getCurrentUser();
+
+        res.json({
+            success: true,
+            isAuthenticated: isAuthenticated,
+            user: user
+        });
+    } catch (error) {
+        console.error('Auth check error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi server khi kiểm tra authentication'
+        });
+    }
+});
+
+// Serve login page
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'src', 'views', 'auth', 'html', 'login.html'));
+});
+
+// Serve login CSS
+app.get('/auth/css/login.css', (req, res) => {
+    res.sendFile(path.join(__dirname, 'src', 'views', 'auth', 'css', 'login.css'));
+});
+
+// Serve login JS
+app.get('/auth/js/login.js', (req, res) => {
+    res.sendFile(path.join(__dirname, 'src', 'views', 'auth', 'js', 'login.js'));
+});
+
+// Serve HTML file (Main Dashboard)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
