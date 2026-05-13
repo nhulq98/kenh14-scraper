@@ -17,9 +17,13 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 dotenv.config();
 
 // Import services and utilities
-const { scrapeArticle } = require('./services/scraper');
-const { generateSummaryWithRetry } = require('./services/gemini');
-const { updateTrendingData, getTrendingCache } = require('./services/trending');
+const ScraperService = require('./src/services/scraper.service');
+const scrapeArticle = ScraperService.scrapeArticle.bind(ScraperService);
+const GeminiService = require('./src/services/gemini.service');
+const generateSummaryWithRetry = GeminiService.generateSummaryWithRetry.bind(GeminiService);
+const trendingService = require('./src/services/trending.service');
+const updateTrendingData = trendingService.updateTrendingData.bind(trendingService);
+const getTrendingCache = trendingService.getTrendingCache.bind(trendingService);
 const { getErrorMessage, isRateLimitOrHighDemandError } = require('./utils/helpers');
 
 const app = express();
