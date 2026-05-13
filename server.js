@@ -36,17 +36,11 @@ app.use(express.static('public'));
 
 // Load authentication service
 const AuthController = require('./src/controllers/auth.controller');
-const rateLimitService = require('./src/services/rate-limit.service');
 
 // Login endpoint
 app.post('/api/auth/login', (req, res) => {
     try {
         const { username, password } = req.body;
-        const clientIP = req.headers['x-forwarded-for']?.split(',')[0].trim() || 
-                        req.socket.remoteAddress || 
-                        'unknown';
-
-        console.log(`🔐 Login attempt from IP: ${clientIP}`);
 
         // Validate input
         if (!username || !password) {
@@ -56,49 +50,18 @@ app.post('/api/auth/login', (req, res) => {
             });
         }
 
-        // Check rate limit
-        const lockoutStatus = rateLimitService.checkLockout(clientIP);
-        if (lockoutStatus.isLocked) {
-            const minutes = Math.ceil(lockoutStatus.remainingTime / 60);
-            return res.status(429).json({
-                success: false,
-                message: `Tài khoản bị khóa do nhiều lần đăng nhập sai. Vui lòng thử lại sau ${minutes} phút.`,
-                locked: true,
-                remainingTime: lockoutStatus.remainingTime,
-                violationCount: lockoutStatus.violationCount
-            });
-        }
-
-        // Handle login
         const result = AuthController.handleLogin(username, password);
 
         if (result.success) {
-            // Clear failed attempts on successful login
-            rateLimitService.clearAttempts(clientIP);
-            
             res.json({
                 success: true,
                 message: result.message,
                 user: result.user
             });
         } else {
-            // Record failed attempt
-            const failureStatus = rateLimitService.recordFailedAttempt(clientIP);
-            
-            let errorMessage = result.message;
-            if (failureStatus.isLocked) {
-                const minutes = Math.ceil(failureStatus.remainingTime / 60);
-                const violationNum = failureStatus.violationCount;
-                errorMessage = `Sai thông tin đăng nhập 6 lần. Tài khoản bị khóa trong ${minutes} phút (lần vi phạm thứ ${violationNum})`;
-            } else if (failureStatus.attemptRemaining !== undefined) {
-                errorMessage = `${result.message} (Còn ${failureStatus.attemptRemaining} lần thử)`;
-            }
-
             res.status(401).json({
                 success: false,
-                message: errorMessage,
-                attemptRemaining: failureStatus.attemptRemaining,
-                locked: failureStatus.isLocked
+                message: result.message
             });
         }
     } catch (error) {

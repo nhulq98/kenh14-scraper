@@ -6,24 +6,7 @@ Tôi đã tạo chức năng login hoàn chỉnh cho website theo cấu trúc MV
 
 ## 🛡️ Tính Năng Bảo Mật
 
-### Rate Limiting (Giới Hạn Đăng Nhập)
-
-Hệ thống tự động bảo vệ tài khoản khỏi brute force attack:
-
-- **Tối đa 5 lần sai**: Mỗi IP chỉ được sai tối đa 5 lần
-- **Khóa tài khoản**: Nếu sai quá 5 lần, IP sẽ bị khóa
-- **Thời gian khóa tăng dần**: 
-  - Lần vi phạm 1: Khóa 5 phút
-  - Lần vi phạm 2: Khóa 10 phút
-  - Lần vi phạm 3: Khóa 15 phút
-  - ... (tăng 5 phút mỗi lần)
-
-**Ví dụ:**
-- Đăng nhập sai lần 1: Hiển thị "Sai thông tin (Còn 4 lần thử)"
-- Đăng nhập sai lần 2: Hiển thị "Sai thông tin (Còn 3 lần thử)"
-- ...
-- Đăng nhập sai lần 6: Khóa 5 phút → "Tài khoản bị khóa trong 5 phút"
-- Đăng nhập sai lần 11 (sau 5p): Khóa 10 phút → "Tài khoản bị khóa trong 10 phút"
+Hiện tại hệ thống chỉ kiểm tra username/password và không có cơ chế giới hạn đăng nhập brute force.
 
 ## 🏗️ Cấu Trúc Thư Mục
 
@@ -48,12 +31,10 @@ project/
 │   │   └── auth.controller.js             # Bridge - Nhận event & gọi service
 │   │
 │   └── services/
-│       ├── auth.service.js                # Tầng xác thực & kiểm tra credentials
-│       └── rate-limit.service.js          # 🆕 Rate limiting theo IP
+│       └── auth.service.js                # Tầng xác thực & kiểm tra credentials
 │
 ├── cache/
-│   ├── trending.cache.json
-│   └── rate_limit.json                    # 🆕 Lưu trữ attempt count theo IP
+│   └── trending.cache.json
 │
 ├── public/
 │   └── index.html                         # Trang chính (có kiểm tra auth)
