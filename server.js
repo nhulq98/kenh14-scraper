@@ -238,9 +238,9 @@ app.post('/api/tts/convert', async (req, res) => {
                 error: 'Dịch vụ TTS chưa được cấu hình. Vui lòng liên hệ admin.'
             });
         }
-
+        const cleaned = text.replace(/\n+/g, ' ');
         const ttsResponse = await axios.post('https://viettelai.vn/tts/speech_synthesis', {
-            text: text,
+            text: cleaned,
             voice: voice,
             speed: speed,
             tts_return_option: 3,
