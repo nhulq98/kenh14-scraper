@@ -9,249 +9,211 @@ let trendingCache = {
     updatedAt: null
 };
 
-// Scrape tiêu đề bài viết từ Kenh14 star page
-async function scrapeKenh14Headlines() {
-    const html = await safeFetch('https://kenh14.vn/star.chn');
+// Drama keywords tăng score
+const DRAMA_KEYWORDS = [
+    'ngoại tình', 'scandal', 'lên tiếng', 'bị tố', 'phản ứng',
+    'bức xúc', 'chia tay', 'ly hôn', 'bị tấn công', 'đáp trả',
+    'sự thật', 'bại lộ', 'gây tranh cãi', 'gây sốc', 'nước đi sai',
+    'bị chỉ trích', 'xin lỗi', 'tẩy chay', 'bí mật', 'cãi nhau',
+    'tức giận', 'vướng lao lý', 'bị bắt', 'phủ nhận', 'thừa nhận',
+];
+
+// ─── SCRAPE LISTING PAGES ────────────────────────────────────────────────────
+
+async function scrapeListingPage(url) {
+    const html = await safeFetch(url);
     if (!html) return [];
     const $ = cheerio.load(html);
-    const titles = [];
-    
-    $('h3.knc-title, h3.title, .item-title, .news-title, .box-category-item h3, .knc-box h3, h2.knc-title').each((i, el) => {
-        const t = $(el).text().trim();
-        if (t && t.length > 10) titles.push(t);
-    });
-    
-    if (titles.length < 5) {
-        $('h3').each((i, el) => {
-            const t = $(el).text().trim();
-            if (t && t.length > 10) titles.push(t);
-        });
-    }
-    console.log(`📰 Kenh14 headlines: ${titles.length} titles`);
-    return titles.slice(0, 30);
-}
+    const articles = [];
 
-// Scrape tiêu đề từ Saostar
-async function scrapeSaostarHeadlines() {
-    const html = await safeFetch('https://www.saostar.vn/giai-tri/');
-    if (!html) return [];
-    const $ = cheerio.load(html);
-    const titles = [];
-    $('h2, h3, .news-title, .article-title, .title').each((i, el) => {
-        const t = $(el).text().trim();
-        if (t && t.length > 10) titles.push(t);
-    });
-    console.log(`📰 Saostar headlines: ${titles.length} titles`);
-    return titles.slice(0, 30);
-}
-
-// Dùng Gemini phân tích danh sách tiêu đề và trả về top 7 tên nhân vật
-async function analyzeTop7PeopleWithGemini(allHeadlines) {
-    if (allHeadlines.length === 0) {
-        return ['Không có dữ liệu', '', '', '', '', '', ''];
-    }
-
-    const joined = allHeadlines.slice(0, 80).join('\n');
-    const prompt = `Bạn là chuyên gia phân tích xu hướng mạng xã hội.
-Dưới đây là danh sách các tiêu đề bài báo giải trí và trending searches Việt Nam thu thập trong 48h qua.
-
-Nhiệm vụ: Phân tích và trả về ĐÚNG 7 tên nhân vật (ca sĩ, diễn viên, người nổi tiếng VN hoặc quốc tế) đang được nhắc đến nhiều nhất / đang hot nhất.
-
-Quy tắc:
-- Chỉ trả về MỘT JSON array, ví dụ: ["Tên 1", "Tên 2", "Tên 3", "Tên 4", "Tên 5", "Tên 6", "Tên 7"]
-- Đúng 7 phần tử, không nhiều hơn không ít hơn
-- Ưu tiên người có nhiều lần xuất hiện trong các tiêu đề
-- Nếu không đủ 7 người rõ ràng, điền tên nổi tiếng nhất bạn xác định được
-- KHÔNG giải thích, chỉ xuất ra JSON array
-
-Dữ liệu:
-${joined}`;
-
-    try {
-        const raw = await generateSummaryWithRetry(prompt);
-        // Tìm JSON array trong response
-        const match = raw.match(/\[.*?\]/s);
-        if (match) {
-            const parsed = JSON.parse(match[0]);
-            if (Array.isArray(parsed)) {
-                return parsed.slice(0, 7).map(n => String(n).trim());
-            }
-        }
-    } catch (err) {
-        console.warn('⚠️  Gemini people analysis failed:', err.message);
-    }
-    return ['Không xác định', '', '', '', '', '', ''];
-}
-
-// Scrape articles từ một trang, trả về [{title, url, source, date}]
-async function scrapeArticlesFromSource(sourceUrl, sourceName, people) {
-    const html = await safeFetch(sourceUrl);
-    if (!html) return [];
-    const $ = cheerio.load(html);
-    const results = [];
-    const now = Date.now();
-    const limit48h = 48 * 60 * 60 * 1000;
-
-    // Lấy tất cả link có title
-    $('a').each((i, el) => {
+    $('a').each((_, el) => {
         const title = $(el).text().trim();
         const href = $(el).attr('href') || '';
         if (!title || title.length < 15 || !href || href === '#') return;
 
-        // Kiểm tra href hợp lệ
         let fullUrl = href;
         if (href.startsWith('/')) {
-            const base = new URL(sourceUrl);
+            const base = new URL(url);
             fullUrl = `${base.protocol}//${base.host}${href}`;
         } else if (!href.startsWith('http')) {
             return;
         }
 
-        // Kiểm tra có đề cập đến người nào trong top 5 không
-        const titleLower = title.toLowerCase();
-        // Check toàn bộ tên người
-        const matched = people.some(p => {
-            if (!p) return false;
-            const nameLower = p.toLowerCase();
-            // Chỉ match nếu:
-            // 1. Toàn bộ tên xuất hiện trong title
-            // 2. HOẶC tất cả các từ trong tên đều xuất hiện (đặc biệt cho tên 2-3 từ)
-            if (titleLower.includes(nameLower)) {
-                return true;
-            }
-            // Check nếu toàn bộ các từ trong tên đều có trong title
-            const nameParts = nameLower.split(' ').filter(p => p.length > 0);
-            if (nameParts.length > 1) {
-                // Cho tên nhiều từ, cần tất cả từ xuất hiện
-                return nameParts.every(part => titleLower.includes(part));
-            }
-            return false;
-        });
-        if (!matched) return;
-
-        results.push({ title, url: fullUrl, source: sourceName });
+        articles.push({ title, url: fullUrl });
     });
 
-    // Filter by 48-hour window
-    const filtered = [];
-    for (const article of results) {
-        const articleDate = await extractArticleDate(article.url);
-        if (articleDate && (now - articleDate) <= limit48h) {
-            filtered.push({ 
-                title: article.title, 
-                url: article.url, 
+    // Deduplicate by URL
+    const seen = new Set();
+    return articles.filter(a => {
+        if (seen.has(a.url)) return false;
+        seen.add(a.url);
+        return true;
+    });
+}
+
+async function scrapeKenh14Headlines() {
+    const articles = await scrapeListingPage('https://kenh14.vn/star.chn');
+    console.log(`📰 Kenh14 headlines: ${articles.length} articles`);
+    return articles.map(a => ({ ...a, source: 'Kenh14' }));
+}
+
+async function scrapeSaostarHeadlines() {
+    const articles = await scrapeListingPage('https://www.saostar.vn/giai-tri/');
+    console.log(`📰 Saostar headlines: ${articles.length} articles`);
+    return articles.map(a => ({ ...a, source: 'Saostar' }));
+}
+
+// ─── EXTRACT NAMES VIA GEMINI ────────────────────────────────────────────────
+// Gemini chỉ làm 1 việc: extract tên từ danh sách tiêu đề
+// KHÔNG để Gemini tự quyết định ai trending
+
+async function extractNamesFromTitles(titles) {
+    if (titles.length === 0) return [];
+
+    const joined = titles.slice(0, 100).join('\n');
+    const prompt = `Nhiệm vụ: Từ danh sách tiêu đề bài báo giải trí Việt Nam dưới đây, hãy extract TẤT CẢ tên người nổi tiếng được nhắc đến.
+
+Quy tắc:
+- Chỉ trả về JSON object, key là tên tiêu đề bài báo (nguyên văn), value là mảng tên người nổi tiếng trong bài đó
+- Nếu tiêu đề không nhắc tên cụ thể, bỏ qua
+- Tên phải là tên đầy đủ hoặc tên thường gọi phổ biến (ví dụ: "Lee Byung Hun", "Ngọc Trinh", "JustaTee")
+- KHÔNG giải thích, chỉ xuất JSON
+
+Ví dụ output:
+{
+  "Lee Byung Hun đã ngoại tình còn ra tối hậu thư cho vợ": ["Lee Byung Hun"],
+  "Vợ JustaTee chơi pickleball sau sinh 2 tháng": ["JustaTee"],
+  "Noo Phước Thịnh lên tiếng về clip liên quan Miu Lê": ["Noo Phước Thịnh", "Miu Lê"]
+}
+
+Danh sách tiêu đề:
+${joined}`;
+
+    try {
+        const raw = await generateSummaryWithRetry(prompt);
+        // Extract JSON từ response
+        const match = raw.match(/\{[\s\S]*\}/);
+        if (match) {
+            return JSON.parse(match[0]);
+        }
+    } catch (err) {
+        console.warn('⚠️ Gemini name extraction failed:', err.message);
+    }
+    return {};
+}
+
+// ─── FREQUENCY SCORING ───────────────────────────────────────────────────────
+
+function calcDramaScore(title) {
+    const lower = title.toLowerCase();
+    return DRAMA_KEYWORDS.filter(kw => lower.includes(kw)).length;
+}
+
+function buildCelebRanking(allArticles, nameMap) {
+    // nameMap: { title -> [names] }
+    const celebMap = {}; // { name: { count, dramaScore, articles[] } }
+
+    for (const article of allArticles) {
+        const names = nameMap[article.title] || [];
+        const dramaScore = calcDramaScore(article.title);
+
+        for (const name of names) {
+            if (!name || name.length < 2) continue;
+            if (!celebMap[name]) {
+                celebMap[name] = { count: 0, dramaScore: 0, articles: [] };
+            }
+            celebMap[name].count += 1;
+            celebMap[name].dramaScore += dramaScore;
+            // Lưu lại article để dùng cho dropdown
+            celebMap[name].articles.push({
+                title: article.title,
+                url: article.url,
                 source: article.source,
-                date: new Date(articleDate).toISOString()
             });
         }
     }
 
-    return filtered.slice(0, 20);
+    // score = frequency * 3 + dramaScore * 2
+    return Object.entries(celebMap)
+        .map(([name, data]) => ({
+            name,
+            score: data.count * 3 + data.dramaScore * 2,
+            articleCount: data.count,
+            dramaScore: data.dramaScore,
+            rawArticles: data.articles,
+        }))
+        .sort((a, b) => b.score - a.score);
 }
 
-// Lấy ALL bài báo cho mỗi người trong 48 giờ
-async function fetchArticlesForPeople(people) {
-    const sources = [
-        { url: 'https://kenh14.vn/star.chn', name: 'Kenh14' },
-        { url: 'https://www.saostar.vn/giai-tri/', name: 'Saostar' }
-    ];
+// ─── FILTER ARTICLES BY DATE ─────────────────────────────────────────────────
 
-    const peopleArticles = [];
+async function filterArticlesByDate(articles, limitHours = 48) {
+    const now = Date.now();
+    const limitMs = limitHours * 60 * 60 * 1000;
+    const filtered = [];
 
-    // Cho mỗi người, lấy TẤT CẢ bài báo từ các nguồn
-    for (const person of people) {
-        if (!person) continue;
-
-        const personArticles = [];
-
-        // Fetch từ tất cả nguồn
-        for (const src of sources) {
-            const articles = await scrapeArticlesFromSource(src.url, src.name, [person]);
-            personArticles.push(...articles);
+    for (const article of articles.slice(0, 30)) { // cap để tránh quá nhiều requests
+        const date = await extractArticleDate(article.url);
+        if (date && now - date <= limitMs) {
+            filtered.push({ ...article, date: new Date(date).toISOString() });
         }
-
-        // Sort theo ngày mới nhất, limit top 10
-        personArticles.sort((a, b) => new Date(b.date) - new Date(a.date));
-        const topArticles = personArticles.slice(0, 10);
-
-        peopleArticles.push({
-            person,
-            articles: topArticles
-        });
-
-        console.log(`📄 ${person}: tìm được ${topArticles.length} bài báo`);
     }
-
-    return peopleArticles;
+    return filtered;
 }
 
-// Hàm chính: cập nhật toàn bộ trending data
+// ─── MAIN UPDATE ─────────────────────────────────────────────────────────────
+
 async function updateTrendingData() {
     console.log('🔄 Bắt đầu cập nhật trending data...');
     try {
-        // Thu thập dữ liệu song song từ Kenh14 và Saostar
-        const [kenh14Headlines, saostarHeadlines] = await Promise.all([
+        // 1. Scrape listing pages song song
+        const [kenh14Articles, saostarArticles] = await Promise.all([
             scrapeKenh14Headlines(),
-            scrapeSaostarHeadlines()
+            scrapeSaostarHeadlines(),
         ]);
 
-        const allHeadlines = [
-            ...kenh14Headlines,
-            ...saostarHeadlines
-        ];
+        const allArticles = [...kenh14Articles, ...saostarArticles];
+        console.log(`📊 Tổng số bài: ${allArticles.length}`);
 
-        console.log(`📊 Tổng số tiêu đề thu thập được: ${allHeadlines.length}`);
+        // 2. Dùng Gemini extract tên từ tiêu đề (KHÔNG tự rank)
+        const titles = allArticles.map(a => a.title);
+        const nameMap = await extractNamesFromTitles(titles);
+        console.log(`🏷️ Extracted names for ${Object.keys(nameMap).length} titles`);
 
-        // Dùng Gemini xác định top 7 nhân vật
-        const top7People = await analyzeTop7PeopleWithGemini(allHeadlines);
-        console.log('🌟 Top 7 nhân vật:', top7People);
+        // 3. Tính frequency score → rank
+        const ranked = buildCelebRanking(allArticles, nameMap);
+        console.log('📈 Top ranked:', ranked.slice(0, 7).map(r => `${r.name}(${r.score})`).join(', '));
 
-        // Fetch stats cho mỗi nhân vật
-        const peopleWithStats = [];
-        for (const person of top7People) {
-            if (person) {
-                const stats = await getPeopleStats([person]);
-                if (stats.length > 0) {
-                    peopleWithStats.push({
-                        name: person,
-                        stats: stats[0].stats
-                    });
-                } else {
-                    peopleWithStats.push({
-                        name: person,
-                        stats: {}
-                    });
-                }
-            }
+        // 4. Lấy top 7, filter articles theo 48h
+        const top7 = ranked.slice(0, 7);
+        const people = [];
+
+        for (const celeb of top7) {
+            // Filter articles của người này theo 48h
+            const filtered = await filterArticlesByDate(celeb.rawArticles);
+            const stats = await getPeopleStats([celeb.name]);
+
+            people.push({
+                name: celeb.name,
+                score: celeb.score,
+                articleCount: celeb.articleCount,
+                dramaScore: celeb.dramaScore,
+                stats: stats[0]?.stats || {},
+                articles: filtered.slice(0, 10),
+            });
         }
-        console.log('📊 Đã fetch stats cho các nhân vật');
 
-        // Lấy TẤT CẢ bài báo cho mỗi người
-        const peopleArticles = await fetchArticlesForPeople(top7People);
-        console.log(`📰 Tìm được articles cho ${peopleArticles.length} nhân vật`);
-
-        // Merge articles vào peopleWithStats
-        const people = peopleWithStats.map(person => {
-            const articleData = peopleArticles.find(pa => pa.person === person.name);
-            return {
-                ...person,
-                articles: articleData ? articleData.articles : []
-            };
-        });
-
-        // Cập nhật cache - chỉ lưu people, không cần articles array riêng
         trendingCache = {
-            people: people,
-            updatedAt: new Date().toISOString()
+            people,
+            updatedAt: new Date().toISOString(),
         };
 
-        console.log('✅ Trending data đã cập nhật thành công!');
+        console.log('✅ Trending data cập nhật thành công!');
     } catch (err) {
         console.error('❌ Lỗi cập nhật trending:', err.message);
     }
 }
 
-// Lấy cache hiện tại
 function getTrendingCache() {
     return trendingCache;
 }
@@ -260,5 +222,5 @@ module.exports = {
     updateTrendingData,
     getTrendingCache,
     scrapeKenh14Headlines,
-    scrapeSaostarHeadlines
+    scrapeSaostarHeadlines,
 };
