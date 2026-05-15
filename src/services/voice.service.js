@@ -1,5 +1,7 @@
 const axios = require('axios');
 const { getErrorMessage } = require('../../utils/helpers');
+const https = require('https');
+const agent = new https.Agent({ keepAlive: true });
 
 class VoiceService {
     /**
@@ -17,7 +19,7 @@ class VoiceService {
         }
 
         const response = await axios.post('https://viettelai.vn/tts/speech_synthesis', {
-            text: text,
+            text: text.replace(/\n+/g, ' '),
             voice: voice,
             speed: speed,
             tts_return_option: 3,
@@ -28,8 +30,9 @@ class VoiceService {
                 'accept': '*/*',
                 'Content-Type': 'application/json'
             },
-            responseType: 'arraybuffer',
-            timeout: 30000
+            responseType: 'stream',
+            timeout: 30000,
+            httpsAgent: agent
         });
 
         if (!response.data || response.data.length === 0) {

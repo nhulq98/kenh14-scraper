@@ -42,7 +42,8 @@ class VoiceController {
             res.setHeader('Content-Disposition', 'attachment; filename="audio.mp3"');
 
             // Send audio data
-            res.send(audioData);
+            // res.send(audioData);
+            audioData.pipe(res);
 
             console.log('✅ TTS conversion successful');
 
