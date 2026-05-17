@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   },
   "keywords": [
     "scraper",
@@ -24,7 +26,8 @@
     "node-cron": "^4.2.1"
   },
   "devDependencies": {
+    "google-trends-api": "^4.9.2",
     "nodemon": "^3.1.14",
-    "google-trends-api": "^4.9.2"
+    "wrangler": "^4.92.0"
   }
 }
