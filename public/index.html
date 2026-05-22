@@ -28,7 +28,7 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Times New Roman', Times, serif, Arial, Helvetica, sans-serif;
             background: linear-gradient(135deg, var(--bg-light) 0%, #f0f4f8 100%);
             color: var(--text-primary);
             line-height: 1.6;
@@ -148,7 +148,7 @@
             padding: 12px 14px;
             border: 2px solid var(--border);
             border-radius: 10px;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Times New Roman', Times, serif, Arial, Helvetica, sans-serif;
             font-size: 0.95em;
             transition: all 0.3s ease;
             background: var(--bg-light);
@@ -175,7 +175,7 @@
             width: 100%;
             min-height: 300px;
             resize: vertical;
-            font-family: 'Courier New', monospace;
+            font-family: 'Times New Roman', Times, serif, Arial, Helvetica, sans-serif;
             font-size: 0.9em;
             line-height: 1.6;
             color: var(--text-primary);
@@ -592,7 +592,7 @@
             bottom: calc(100% + 8px);
             animation: dropdownSlideUp 0.2s ease;
         }
-
+        
         /* Buffer zone to keep dropdown hoverable for last 2 items */
         .people-item:last-child::after,
         .people-item:nth-last-child(2)::after {
@@ -2049,7 +2049,7 @@
             }
             const rankClasses = ['rank-1', 'rank-2', 'rank-3', 'rank-4', 'rank-5', 'rank-6', 'rank-7'];
             const medals = ['🥇', '🥈', '🥉', '4', '5', '6', '7'];
-
+            
             list.innerHTML = people
                 .filter(p => p && (p.name || p))
                 .slice(0, 7)
@@ -2057,7 +2057,7 @@
                     const name = item.name || item;
                     const stats = item.stats || {};
                     const articles = item.articles || [];
-
+                    
                     // Tạo HTML dropdown articles
                     const articlesHtml = articles.length > 0
                         ? articles.map(a => `
@@ -2072,7 +2072,7 @@
                             </li>
                         `).join('')
                         : '<li style="padding:8px;color:var(--text-secondary);font-size:0.58em;text-align:center;">Chưa có bài viết</li>';
-
+                    
                     return `
                     <li class="people-item">
                         <div class="rank-badge ${rankClasses[i]}">${medals[i]}</div>
@@ -2089,7 +2089,7 @@
                         </div>
                     </li>`
                 }).join('');
-
+            
             // Attach dropdown hover listeners
             attachDropdownListeners();
         }
@@ -2099,11 +2099,11 @@
             peopleItems.forEach(item => {
                 const dropdown = item.querySelector('.articles-dropdown');
                 if (!dropdown) return;
-
+                
                 let hoverTimeout;
                 let isHoveringItem = false;
                 let isHoveringDropdown = false;
-
+                
                 function updateDropdownState() {
                     if (isHoveringItem || isHoveringDropdown) {
                         dropdown.classList.add('active');
@@ -2114,25 +2114,25 @@
                         }, 50);
                     }
                 }
-
+                
                 // When mouse enters the people-item
                 item.addEventListener('mouseenter', () => {
                     isHoveringItem = true;
                     updateDropdownState();
                 });
-
+                
                 // When mouse leaves the people-item
                 item.addEventListener('mouseleave', () => {
                     isHoveringItem = false;
                     updateDropdownState();
                 });
-
+                
                 // When mouse enters the dropdown
                 dropdown.addEventListener('mouseenter', () => {
                     isHoveringDropdown = true;
                     updateDropdownState();
                 });
-
+                
                 // When mouse leaves the dropdown
                 dropdown.addEventListener('mouseleave', () => {
                     isHoveringDropdown = false;
@@ -2191,7 +2191,7 @@
                 buttonOrEvent.preventDefault();
                 button = buttonOrEvent.target;
             }
-
+            
             navigator.clipboard.writeText(url).then(() => {
                 const originalText = button.innerHTML;
                 button.innerHTML = '✅ Đã copy!';
