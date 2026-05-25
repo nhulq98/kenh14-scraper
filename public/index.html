@@ -1726,6 +1726,7 @@
                 <div id="batchQueueList"></div>
 
                 <div class="batch-export" id="batchExportRow">
+                    <button class="btn-secondary" style="font-size:0.85em;padding:8px 14px" onclick="batchStartTTSAll()">🔊 Bắt đầu đọc hàng loạt</button>
                     <button class="btn-secondary" style="font-size:0.85em;padding:8px 14px" onclick="batchExport('text')">📋 Copy tất cả tóm tắt</button>
                     <button class="btn-secondary" style="font-size:0.85em;padding:8px 14px" onclick="batchExport('json')">⬇ Export JSON</button>
                     <button class="btn-primary" style="font-size:0.85em;padding:8px 14px" onclick="batchReset()">＋ Batch mới</button>
@@ -3019,6 +3020,80 @@
             navigator.clipboard.writeText(item.content).then(() => {
                 const btn = e.target.closest('button');
                 if (btn) { const o = btn.textContent; btn.textContent = '✅ Đã copy!'; setTimeout(() => btn.textContent = o, 1800); }
+            });
+        }
+
+        async function batchStartTTSAll() {
+            const done = batchQueue.filter(i => i.status === 'done' && i.summary);
+            if (!done.length) return;
+
+            const voice = selectedVoice || 'hn-quynhanh';
+            const speed = parseFloat(document.getElementById('speedSelect')?.value || 1);
+
+            // --- Phase 1: Convert song song tất cả ---
+            const convertPromises = done.map(item => batchConvertTTS(item, voice, speed));
+            await Promise.allSettled(convertPromises);
+
+            // --- Phase 2: Phát tuần tự ---
+            for (const item of done) {
+                if (!item._audioUrl) continue; // skip item lỗi
+                await batchConvertTTS(item, voice, speed);
+            }
+        }
+
+        async function batchConvertTTS(item, voice, speed) {
+            // Skip nếu đã có audio rồi
+            if (item._audioUrl) return;
+
+            const ttsText = item._ttsText !== undefined
+                ? item._ttsText
+                : (item.title ? item.title.trimEnd().replace(/\.+$/, '') + '.\n\n' : '') + (item.summary || '');
+
+            item._ttsStatus = 'loading';
+            batchUpdateItem(item);
+
+            try {
+                const res = await fetch('/api/tts/convert', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: ttsText, voice, speed })
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || 'Lỗi TTS');
+                }
+                const blob = await res.blob();
+                item._audioBlob = blob;
+                item._audioUrl = URL.createObjectURL(blob);
+                item._ttsStatus = 'done';
+            } catch (err) {
+                item._ttsStatus = 'error';
+                item._ttsError = err.message;
+            }
+            batchUpdateItem(item);
+        }
+
+        function batchPlayItem(item) {
+            return new Promise(resolve => {
+                if (!item._audioUrl) { resolve(); return; }
+
+                // Highlight + expand + scroll
+                item._tab = 'tts';
+                batchOpen.add(item.id);
+                batchUpdateItem(item);
+
+                const el = document.getElementById('bqi-' + item.id);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Tìm audio element vừa render
+                setTimeout(() => {
+                    const audioEl = el?.querySelector('audio');
+                    if (!audioEl) { resolve(); return; }
+
+                    audioEl.onended = () => resolve();
+                    audioEl.onerror = () => resolve();
+                    audioEl.play().catch(() => resolve());
+                }, 400); // đợi DOM update + scroll
             });
         }
     </script>
