@@ -2803,35 +2803,98 @@
                 const activeTab = item._tab || 'sum';
                 const charCount = (item.content||'').length.toLocaleString('vi-VN');
                 const wordCount = (item.content||'').trim().split(/\s+/).filter(Boolean).length.toLocaleString('vi-VN');
-                body = `<div class="q-body ${isOpen ? 'open' : ''}" id="bqb-${item.id}">
-                    <div style="display:flex;border-bottom:1px solid var(--border);padding:0 14px;gap:0">
-                        <button onclick="batchSwitchTab(${item.id},'sum',event)" id="bqtab-${item.id}-sum"
-                            style="font-size:0.9em;font-weight:600;padding:8px 14px;border:none;background:transparent;cursor:pointer;border-bottom:2px solid ${activeTab==='sum'?'var(--text-primary)':'transparent'};color:${activeTab==='sum'?'var(--text-primary)':'var(--text-secondary)'};margin-bottom:-1px;transition:all 0.15s">
-                            ✨ Tóm tắt AI
-                        </button>
-                        <button onclick="batchSwitchTab(${item.id},'ori',event)" id="bqtab-${item.id}-ori"
-                            style="font-size:0.9em;font-weight:600;padding:8px 14px;border:none;background:transparent;cursor:pointer;border-bottom:2px solid ${activeTab==='ori'?'var(--text-primary)':'transparent'};color:${activeTab==='ori'?'var(--text-primary)':'var(--text-secondary)'};margin-bottom:-1px;transition:all 0.15s">
-                            📄 Nội dung gốc
-                        </button>
-                    </div>
+                // Text TTS = title + ". " + summary (có thể user đã chỉnh sửa)
+                const ttsText = item._ttsText !== undefined
+                    ? item._ttsText
+                    : (item.title ? item.title.trimEnd().replace(/\.+$/, '') + '.\n\n' : '') + (item.summary || '');
 
+                const tabs = ['sum','ori','tts'];
+                const tabLabels = ['✨ Tóm tắt AI','📄 Nội dung gốc','🔊 TTS'];
+
+                const tabBar = tabs.map((t,i) => `
+                    <button onclick="batchSwitchTab(${item.id},'${t}',event)"
+                        style="font-size:12px;font-weight:${activeTab===t?'600':'500'};padding:8px 14px;border:none;background:transparent;cursor:pointer;
+                        border-bottom:2px solid ${activeTab===t?'var(--text-primary)':'transparent'};
+                        color:${activeTab===t?'var(--text-primary)':'var(--text-secondary)'};
+                        margin-bottom:-0.5px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px">
+                        ${tabLabels[i]}
+                    </button>`).join('');
+
+                // TTS status + audio player html
+                const ttsStatusHtml = item._ttsStatus === 'loading'
+                    ? `<div style="font-size:12px;padding:6px 10px;border-radius:8px;background:#dbeafe;color:#1e40af;display:flex;align-items:center;gap:6px;margin-bottom:8px">
+                        <span style="width:11px;height:11px;border:1.5px solid #1e40af;border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;flex-shrink:0"></span>
+                        Đang chuyển đổi văn bản...
+                    </div>`
+                    : item._ttsStatus === 'done'
+                    ? `<div style="font-size:12px;padding:6px 10px;border-radius:8px;background:#d1fae5;color:#065f46;margin-bottom:8px">✅ Chuyển đổi thành công!</div>`
+                    : item._ttsStatus === 'error'
+                    ? `<div style="font-size:12px;padding:6px 10px;border-radius:8px;background:#fee2e2;color:#991b1b;margin-bottom:8px">❌ ${item._ttsError||'Lỗi TTS'}</div>`
+                    : '';
+
+                const audioHtml = item._audioUrl
+                    ? `<div style="background:var(--bg-light);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px">
+                        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px">Giọng: ${selectedVoice||'hn-quynhanh'} · Tốc độ: ${document.getElementById('speedSelect')?.value||1}x</div>
+                        <audio controls src="${item._audioUrl}" style="width:100%;height:36px;margin-bottom:8px;border-radius:4px"></audio>
+                        <div style="display:flex;gap:6px">
+                            <button onclick="batchDownloadAudio(${item.id},'mp3',event)"
+                                style="font-size:12px;padding:5px 11px;border:1px solid var(--border);border-radius:8px;background:var(--text-primary);color:white;cursor:pointer;display:flex;align-items:center;gap:4px">
+                                ⬇ Tải MP3
+                            </button>
+                            <button onclick="batchDownloadAudioWav(${item.id},event)"
+                                style="font-size:12px;padding:5px 11px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text-primary);cursor:pointer;display:flex;align-items:center;gap:4px">
+                                ⬇ Tải WAV
+                            </button>
+                        </div>
+                    </div>`
+                    : '';
+
+                body = `<div class="q-body ${isOpen?'open':''}" id="bqb-${item.id}">
+                    <div style="display:flex;border-bottom:1px solid var(--border);padding:0 14px;gap:0">
+                        ${tabBar}
+                    </div>
                     <div style="padding:12px 14px 14px">
+
                         <div id="bqpane-${item.id}-sum" style="display:${activeTab==='sum'?'block':'none'}">
-                            <div style="font-size:0.9em;line-height:1.75;color:var(--text-primary);white-space:pre-line;border-left:3px solid var(--border);padding-left:10px;margin-bottom:12px">${escapeHtml(item.summary)}</div>
+                            <div style="font-size:13px;line-height:1.75;color:var(--text-primary);white-space:pre-line;border-left:3px solid var(--border);padding-left:10px;margin-bottom:12px">${escapeHtml(item.summary)}</div>
                             <div class="q-actions">
                                 <button onclick="batchCopyItem(${item.id},event)">📋 Copy tóm tắt</button>
-                                <button onclick="batchSendTTS(${item.id},event)">🔊 Gửi TTS</button>
+                                <button onclick="batchSwitchTab(${item.id},'tts',event)">🔊 Chuyển sang TTS</button>
                                 <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener">🔗 Bài gốc</a>
                             </div>
                         </div>
 
                         <div id="bqpane-${item.id}-ori" style="display:${activeTab==='ori'?'block':'none'}">
-                            <div style="font-size:0.9em;color:var(--text-secondary);margin-bottom:6px">${charCount} ký tự · ${wordCount} từ</div>
-                            <div style="font-size:0.9em;line-height:1.7;color:var(--text-secondary);max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--bg-light);white-space:pre-wrap;word-break:break-word;margin-bottom:12px">${escapeHtml(item.content||'Không có nội dung gốc')}</div>
+                            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px">${charCount} ký tự · ${wordCount} từ</div>
+                            <div style="font-size:12px;line-height:1.7;color:var(--text-secondary);max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--bg-light);white-space:pre-wrap;word-break:break-word;margin-bottom:12px">${escapeHtml(item.content||'Không có nội dung gốc')}</div>
                             <div class="q-actions">
                                 <button onclick="batchCopyOriginal(${item.id},event)">📋 Copy nội dung gốc</button>
                             </div>
                         </div>
+
+                        <div id="bqpane-${item.id}-tts" style="display:${activeTab==='tts'?'block':'none'}">
+                            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px;display:flex;justify-content:space-between">
+                                <span>✏️ Chỉnh sửa nội dung trước khi đọc</span>
+                                <span id="bqttsc-${item.id}">${ttsText.length.toLocaleString('vi-VN')} ký tự</span>
+                            </div>
+                            <textarea id="bqtts-${item.id}"
+                                oninput="batchTtsTextChange(${item.id})"
+                                style="width:100%;min-height:120px;font-size:13px;line-height:1.7;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-light);color:var(--text-primary);resize:vertical;font-family:inherit;margin-bottom:10px"
+                            >${escapeHtml(ttsText)}</textarea>
+                            <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+                                <button id="bqreadbtn-${item.id}" onclick="batchReadTTS(${item.id},event)"
+                                    style="font-size:13px;padding:7px 16px;border-radius:8px;border:none;background:var(--text-primary);color:white;cursor:pointer;display:flex;align-items:center;gap:6px;font-weight:600">
+                                    🔊 Đọc văn bản
+                                </button>
+                                <button onclick="batchResetTtsText(${item.id},event)"
+                                    style="font-size:12px;padding:7px 12px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text-secondary);cursor:pointer">
+                                    ↩ Reset
+                                </button>
+                            </div>
+                            ${ttsStatusHtml}
+                            ${audioHtml}
+                        </div>
+
                     </div>
                 </div>`;
             } else if (item.status === 'error') {
@@ -3001,16 +3064,7 @@
         function batchSwitchTab(id, tab, e) {
             e && e.stopPropagation();
             batchQueue[id]._tab = tab;
-            // Update tab buttons
-            ['sum','ori'].forEach(t => {
-                const btn = document.getElementById('bqtab-' + id + '-' + t);
-                const pane = document.getElementById('bqpane-' + id + '-' + t);
-                if (btn) {
-                    btn.style.borderBottomColor = t === tab ? 'var(--text-primary)' : 'transparent';
-                    btn.style.color = t === tab ? 'var(--text-primary)' : 'var(--text-secondary)';
-                }
-                if (pane) pane.style.display = t === tab ? 'block' : 'none';
-            });
+            batchUpdateItem(batchQueue[id]);
         }
 
         function batchCopyOriginal(id, e) {
@@ -3038,6 +3092,7 @@
             for (const item of done) {
                 if (!item._audioUrl) continue; // skip item lỗi
                 await batchConvertTTS(item, voice, speed);
+                await new Promise(r => setTimeout(r, 4000));
             }
         }
 
@@ -3077,24 +3132,107 @@
             return new Promise(resolve => {
                 if (!item._audioUrl) { resolve(); return; }
 
-                // Highlight + expand + scroll
                 item._tab = 'tts';
                 batchOpen.add(item.id);
-                batchUpdateItem(item);
+                batchUpdateItem(item); // render audio element vào DOM
 
                 const el = document.getElementById('bqi-' + item.id);
                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-                // Tìm audio element vừa render
+                // Tăng timeout để chắc chắn DOM đã render xong + scroll
                 setTimeout(() => {
-                    const audioEl = el?.querySelector('audio');
+                    // Query đúng audio trong pane TTS của item này
+                    const pane = document.getElementById('bqpane-' + item.id + '-tts');
+                    const audioEl = pane?.querySelector('audio');
                     if (!audioEl) { resolve(); return; }
 
                     audioEl.onended = () => resolve();
                     audioEl.onerror = () => resolve();
                     audioEl.play().catch(() => resolve());
-                }, 400); // đợi DOM update + scroll
+                }, 7000);
             });
+        }
+
+        function batchTtsTextChange(id) {
+            const ta = document.getElementById('bqtts-' + id);
+            const counter = document.getElementById('bqttsc-' + id);
+            if (ta) batchQueue[id]._ttsText = ta.value;
+            if (counter && ta) counter.textContent = ta.value.length.toLocaleString('vi-VN') + ' ký tự';
+        }
+
+        function batchResetTtsText(id, e) {
+            e && e.stopPropagation();
+            const item = batchQueue[id];
+            item._ttsText = undefined; // reset về default
+            item._ttsStatus = null;
+            item._audioUrl = null;
+            item._audioBlob = null;
+            batchUpdateItem(item);
+        }
+
+        async function batchReadTTS(id, e) {
+            e && e.stopPropagation();
+            const item = batchQueue[id];
+            const ta = document.getElementById('bqtts-' + id);
+            const text = ta ? ta.value.trim() : '';
+            if (!text) return;
+
+            // Lấy voice/speed từ TTS section hiện có
+            const voice = selectedVoice || 'hn-quynhanh';
+            const speed = parseFloat(document.getElementById('speedSelect')?.value || 1);
+
+            item._ttsStatus = 'loading';
+            item._ttsError = null;
+            batchUpdateItem(item);
+
+            try {
+                const res = await fetch('/api/tts/convert', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ text, voice, speed })
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || 'Lỗi TTS');
+                }
+                const blob = await res.blob();
+                item._audioBlob = blob;
+                item._audioUrl = URL.createObjectURL(blob);
+                item._ttsStatus = 'done';
+            } catch(err) {
+                item._ttsStatus = 'error';
+                item._ttsError = err.message;
+            }
+            batchUpdateItem(item);
+        }
+
+        function batchDownloadAudio(id, fmt, e) {
+            e && e.stopPropagation();
+            const item = batchQueue[id];
+            if (!item._audioUrl) return;
+            const a = document.createElement('a');
+            a.href = item._audioUrl;
+            a.download = `audio_${id+1}_${Date.now()}.mp3`;
+            a.click();
+        }
+
+        async function batchDownloadAudioWav(id, e) {
+            e && e.stopPropagation();
+            const item = batchQueue[id];
+            if (!item._audioBlob) return;
+            // Reuse hàm encodeAudioToWav đã có sẵn trong file gốc
+            try {
+                const ctx = new AudioContext();
+                const ab = await item._audioBlob.arrayBuffer();
+                const audioBuf = await ctx.decodeAudioData(ab);
+                const wavBlob = encodeAudioToWav(audioBuf); // hàm này đã có trong index.html
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(wavBlob);
+                a.download = `audio_${id+1}_${Date.now()}.wav`;
+                a.click();
+            } catch(err) {
+                alert('Lỗi convert WAV: ' + err.message);
+            }
         }
     </script>
 </body>
