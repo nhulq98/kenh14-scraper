@@ -81,7 +81,8 @@
         }
 
         .main-content {
-            display: grid;
+            display: none;
+            /* display: grid; */
             grid-template-columns: 1fr 1fr 1fr;
             gap: 20px;
             margin-bottom: 25px;
@@ -517,7 +518,7 @@
 
         .people-name {
             font-weight: 600;
-            font-size: 0.64em;
+            font-size: 13px;
             color: var(--text-primary);
             cursor: pointer;
             user-select: none;
@@ -535,7 +536,7 @@
         }
 
         .people-name-tooltip {
-            font-size: 9px;
+            font-size: 10px;
             color: #0c0d19e6;
             border-radius: 0;
             white-space: nowrap;
@@ -661,7 +662,7 @@
         }
 
         .dropdown-article-link {
-            font-size: 0.58em;
+            font-size: 11px;
             color: var(--text-primary);
             text-decoration: none;
             display: -webkit-box;
@@ -2798,12 +2799,38 @@
 
             let body = '';
             if (item.status === 'done' && item.summary) {
+                const activeTab = item._tab || 'sum';
+                const charCount = (item.content||'').length.toLocaleString('vi-VN');
+                const wordCount = (item.content||'').trim().split(/\s+/).filter(Boolean).length.toLocaleString('vi-VN');
                 body = `<div class="q-body ${isOpen ? 'open' : ''}" id="bqb-${item.id}">
-                    <div class="q-summary">${escapeHtml(item.summary)}</div>
-                    <div class="q-actions">
-                        <button onclick="batchCopyItem(${item.id},event)">📋 Copy tóm tắt</button>
-                        <button onclick="batchSendTTS(${item.id},event)">🔊 Gửi TTS</button>
-                        <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener">🔗 Bài gốc</a>
+                    <div style="display:flex;border-bottom:1px solid var(--border);padding:0 14px;gap:0">
+                        <button onclick="batchSwitchTab(${item.id},'sum',event)" id="bqtab-${item.id}-sum"
+                            style="font-size:0.9em;font-weight:600;padding:8px 14px;border:none;background:transparent;cursor:pointer;border-bottom:2px solid ${activeTab==='sum'?'var(--text-primary)':'transparent'};color:${activeTab==='sum'?'var(--text-primary)':'var(--text-secondary)'};margin-bottom:-1px;transition:all 0.15s">
+                            ✨ Tóm tắt AI
+                        </button>
+                        <button onclick="batchSwitchTab(${item.id},'ori',event)" id="bqtab-${item.id}-ori"
+                            style="font-size:0.9em;font-weight:600;padding:8px 14px;border:none;background:transparent;cursor:pointer;border-bottom:2px solid ${activeTab==='ori'?'var(--text-primary)':'transparent'};color:${activeTab==='ori'?'var(--text-primary)':'var(--text-secondary)'};margin-bottom:-1px;transition:all 0.15s">
+                            📄 Nội dung gốc
+                        </button>
+                    </div>
+
+                    <div style="padding:12px 14px 14px">
+                        <div id="bqpane-${item.id}-sum" style="display:${activeTab==='sum'?'block':'none'}">
+                            <div style="font-size:0.9em;line-height:1.75;color:var(--text-primary);white-space:pre-line;border-left:3px solid var(--border);padding-left:10px;margin-bottom:12px">${escapeHtml(item.summary)}</div>
+                            <div class="q-actions">
+                                <button onclick="batchCopyItem(${item.id},event)">📋 Copy tóm tắt</button>
+                                <button onclick="batchSendTTS(${item.id},event)">🔊 Gửi TTS</button>
+                                <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener">🔗 Bài gốc</a>
+                            </div>
+                        </div>
+
+                        <div id="bqpane-${item.id}-ori" style="display:${activeTab==='ori'?'block':'none'}">
+                            <div style="font-size:0.9em;color:var(--text-secondary);margin-bottom:6px">${charCount} ký tự · ${wordCount} từ</div>
+                            <div style="font-size:0.9em;line-height:1.7;color:var(--text-secondary);max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--bg-light);white-space:pre-wrap;word-break:break-word;margin-bottom:12px">${escapeHtml(item.content||'Không có nội dung gốc')}</div>
+                            <div class="q-actions">
+                                <button onclick="batchCopyOriginal(${item.id},event)">📋 Copy nội dung gốc</button>
+                            </div>
+                        </div>
                     </div>
                 </div>`;
             } else if (item.status === 'error') {
@@ -2897,6 +2924,7 @@
                 if (!scrapeData.success) throw new Error(scrapeData.error || 'Không lấy được nội dung');
 
                 item.title = scrapeData.title || item.url;
+                item.content = scrapeData.content; // ← dòng này phải có
                 item.status = 'ai';
                 batchUpdateItem(item); batchUpdateStats();
 
@@ -2968,6 +2996,31 @@
             // THÊM DÒNG NÀY:
             document.getElementById('batchUrlInput').addEventListener('input', batchUpdateCount);
         });
+
+        function batchSwitchTab(id, tab, e) {
+            e && e.stopPropagation();
+            batchQueue[id]._tab = tab;
+            // Update tab buttons
+            ['sum','ori'].forEach(t => {
+                const btn = document.getElementById('bqtab-' + id + '-' + t);
+                const pane = document.getElementById('bqpane-' + id + '-' + t);
+                if (btn) {
+                    btn.style.borderBottomColor = t === tab ? 'var(--text-primary)' : 'transparent';
+                    btn.style.color = t === tab ? 'var(--text-primary)' : 'var(--text-secondary)';
+                }
+                if (pane) pane.style.display = t === tab ? 'block' : 'none';
+            });
+        }
+
+        function batchCopyOriginal(id, e) {
+            e && e.stopPropagation();
+            const item = batchQueue[id];
+            if (!item.content) return;
+            navigator.clipboard.writeText(item.content).then(() => {
+                const btn = e.target.closest('button');
+                if (btn) { const o = btn.textContent; btn.textContent = '✅ Đã copy!'; setTimeout(() => btn.textContent = o, 1800); }
+            });
+        }
     </script>
 </body>
 
