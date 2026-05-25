@@ -1406,6 +1406,50 @@
             color: #0c2340;
             border-left: 4px solid var(--accent);
         }
+
+        /* ===== BATCH QUEUE SECTION ===== */
+        .batch-section { grid-column: 1 / -1; }
+        .batch-section .section-title::before { background: #378ADD; }
+
+        .q-item { border: 0.5px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 8px; }
+        .q-header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: white; cursor: pointer; user-select: none; transition: background 0.2s; }
+        .q-header:hover { background: var(--bg-light); }
+        .q-num { width: 22px; height: 22px; border-radius: 50%; background: var(--bg-light); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: var(--text-secondary); flex-shrink: 0; }
+        .q-url { font-size: 12px; color: var(--text-secondary); font-family: monospace; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .q-title { font-size: 13px; font-weight: 600; color: var(--text-primary); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .status-chip { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+        .chip-wait { background: #f1f1f1; color: #888; }
+        .chip-scrape { background: #fff8e1; color: #b45309; }
+        .chip-ai { background: #f3e5f5; color: #7b1fa2; }
+        .chip-done { background: #d1fae5; color: #065f46; }
+        .chip-err { background: #fee2e2; color: #991b1b; }
+        .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+        .dot-wait { background: #ccc; }
+        .dot-scrape { background: #f59e0b; animation: pulse-dot 1s infinite; }
+        .dot-ai { background: #8E44AD; animation: pulse-dot 0.8s infinite; }
+        .dot-done { background: var(--success); }
+        .dot-err { background: var(--error); }
+        @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+        .q-body { display: none; padding: 0 14px 12px; background: white; border-top: 1px solid var(--border); }
+        .q-body.open { display: block; animation: fadeIn 0.2s ease; }
+        .q-summary { font-size: 13px; line-height: 1.75; color: var(--text-primary); border-left: 3px solid var(--border); padding-left: 10px; margin: 10px 0; white-space: pre-line; }
+        .q-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .q-actions button, .q-actions a { font-size: 12px; padding: 5px 10px; border: 1.5px solid var(--border); border-radius: 8px; background: white; color: var(--text-primary); cursor: pointer; text-decoration: none; display: flex; align-items: center; gap: 4px; transition: all 0.2s; }
+        .q-actions button:hover, .q-actions a:hover { background: var(--bg-light); border-color: var(--text-secondary); }
+
+        .batch-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+        .batch-stat { background: var(--bg-light); border-radius: 8px; padding: 10px 12px; }
+        .batch-stat-n { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+        .batch-stat-l { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+        .batch-progress-wrap { height: 3px; background: var(--bg-light); border-radius: 2px; margin-bottom: 16px; }
+        .batch-progress { height: 3px; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; }
+
+        .batch-err-msg { font-size: 12px; color: #991b1b; font-family: monospace; padding: 6px 10px; background: #fee2e2; border-radius: 6px; margin: 8px 0; }
+        .batch-export { display: none; gap: 8px; justify-content: flex-end; padding-top: 10px; border-top: 1px solid var(--border); margin-top: 4px; }
+        .batch-export.show { display: flex; }
+        .batch-spinner { display: inline-block; width: 11px; height: 11px; border: 1.5px solid rgba(0,0,0,0.1); border-top-color: currentColor; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
     </style>
 </head>
 
@@ -1637,6 +1681,53 @@
                         <strong>🎯 Format TikTok:</strong>
                         3 đoạn văn (mở-thân-kết), mỗi đoạn 3 dòng, phù hợp cho nội dung tin ngắn
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== BATCH QUEUE SECTION ===== -->
+        <div class="section batch-section" style="margin-bottom: 25px;">
+            <div class="section-title">⚡ Batch Xử Lý</div>
+
+            <!-- Input -->
+            <div id="batchInputArea">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                    <span style="font-size:0.85em;color:var(--text-secondary)">Dán danh sách URL — mỗi dòng 1 URL (tối đa 10)</span>
+                    <span style="font-size:0.8em;font-weight:600;color:var(--accent)" id="batchUrlCount">0 URLs</span>
+                </div>
+                <textarea id="batchUrlInput" style="width:100%;height:100px;resize:vertical;font-family:monospace;font-size:0.85em;padding:10px 12px;border:2px solid var(--border);border-radius:10px;background:var(--bg-light);color:var(--text-primary);line-height:1.6"
+                    placeholder="https://kenh14.vn/bai-viet-1.chn&#10;https://kenh14.vn/bai-viet-2.chn&#10;https://saostar.vn/bai-viet-3.html"></textarea>
+                <div style="display:flex;gap:8px;margin-top:10px">
+                    <button class="btn-primary" style="flex:2;padding:10px" onclick="batchStart()">⚡ Xử lý hàng loạt</button>
+                    <button class="btn-secondary" style="flex:1" onclick="document.getElementById('batchUrlInput').value='';batchUpdateCount()">🗑 Xóa</button>
+                </div>
+            </div>
+
+            <!-- Queue -->
+            <div id="batchQueueArea" style="display:none;margin-top:16px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                    <span style="font-size:0.9em;font-weight:600;color:var(--text-primary)">
+                        Hàng đợi
+                        <span id="batchQueueBadge" style="font-size:0.75em;font-weight:600;padding:3px 8px;border-radius:20px;margin-left:6px;background:#f1f1f1;color:#888">Chuẩn bị</span>
+                    </span>
+                    <span style="font-size:0.8em;color:var(--text-secondary)" id="batchProgressLabel">0 / 0</span>
+                </div>
+
+                <div class="batch-progress-wrap"><div class="batch-progress" id="batchProgressBar" style="width:0%"></div></div>
+
+                <div class="batch-stats">
+                    <div class="batch-stat"><div class="batch-stat-n" id="bsTotal">0</div><div class="batch-stat-l">Tổng</div></div>
+                    <div class="batch-stat"><div class="batch-stat-n" id="bsDone" style="color:var(--success)">0</div><div class="batch-stat-l">Hoàn thành</div></div>
+                    <div class="batch-stat"><div class="batch-stat-n" id="bsProc" style="color:#8E44AD">0</div><div class="batch-stat-l">Đang xử lý</div></div>
+                    <div class="batch-stat"><div class="batch-stat-n" id="bsErr" style="color:var(--error)">0</div><div class="batch-stat-l">Lỗi</div></div>
+                </div>
+
+                <div id="batchQueueList"></div>
+
+                <div class="batch-export" id="batchExportRow">
+                    <button class="btn-secondary" style="font-size:0.85em;padding:8px 14px" onclick="batchExport('text')">📋 Copy tất cả tóm tắt</button>
+                    <button class="btn-secondary" style="font-size:0.85em;padding:8px 14px" onclick="batchExport('json')">⬇ Export JSON</button>
+                    <button class="btn-primary" style="font-size:0.85em;padding:8px 14px" onclick="batchReset()">＋ Batch mới</button>
                 </div>
             </div>
         </div>
@@ -2645,6 +2736,237 @@
             if (audioUrl) {
                 URL.revokeObjectURL(audioUrl);
             }
+        });
+
+        // ===== BATCH QUEUE =====
+        let batchQueue = [];
+        let batchRunning = false;
+        let batchOpen = new Set();
+
+        document.getElementById('batchUrlInput').addEventListener('input', batchUpdateCount);
+
+        function batchUpdateCount() {
+            const urls = batchParseUrls(document.getElementById('batchUrlInput').value);
+            document.getElementById('batchUrlCount').textContent = urls.length + ' URLs';
+        }
+
+        function batchParseUrls(text) {
+            return text.split('\n').map(s => s.trim())
+                .filter(s => s.startsWith('http') && (s.includes('kenh14.vn') || s.includes('saostar.vn')));
+        }
+
+        function batchStart() {
+            const urls = batchParseUrls(document.getElementById('batchUrlInput').value).slice(0, 10);
+            if (!urls.length) { alert('Vui lòng nhập ít nhất 1 URL hợp lệ (kenh14.vn hoặc saostar.vn)'); return; }
+
+            batchQueue = urls.map((url, i) => ({ id: i, url, status: 'wait', title: null, summary: null, error: null }));
+            batchOpen = new Set();
+
+            document.getElementById('batchInputArea').style.display = 'none';
+            document.getElementById('batchQueueArea').style.display = 'block';
+            batchRender();
+            batchUpdateStats();
+            batchRun();
+        }
+
+        function batchReset() {
+            batchQueue = []; batchRunning = false; batchOpen = new Set();
+            document.getElementById('batchInputArea').style.display = 'block';
+            document.getElementById('batchQueueArea').style.display = 'none';
+            document.getElementById('batchUrlInput').value = '';
+            batchUpdateCount();
+        }
+
+        function batchRender() {
+            document.getElementById('batchQueueList').innerHTML = batchQueue.map(batchRenderItem).join('');
+            batchQueue.forEach(item => {
+                const h = document.getElementById('bqh-' + item.id);
+                if (h) h.onclick = () => batchToggle(item.id);
+            });
+        }
+
+        function batchRenderItem(item) {
+            const chips = { wait:'chip-wait', scrape:'chip-scrape', ai:'chip-ai', done:'chip-done', error:'chip-err' };
+            const labels = { wait:'Chờ', scrape:'Đang scrape', ai:'Đang tóm tắt', done:'Hoàn thành', error:'Lỗi' };
+            const dots = { wait:'dot-wait', scrape:'dot-scrape', ai:'dot-ai', done:'dot-done', error:'dot-err' };
+            const isOpen = batchOpen.has(item.id);
+            const display = (item.title || item.url).slice(0, 60) + ((item.title || item.url).length > 60 ? '…' : '');
+            const spinner = (item.status === 'scrape' || item.status === 'ai')
+                ? `<span class="batch-spinner" style="color:${item.status==='scrape'?'#b45309':'#7b1fa2'}"></span>` : '';
+            const chevron = (item.status === 'done' || item.status === 'error')
+                ? `<span style="font-size:12px;color:var(--text-secondary)">${isOpen ? '▲' : '▼'}</span>` : '';
+
+            let body = '';
+            if (item.status === 'done' && item.summary) {
+                body = `<div class="q-body ${isOpen ? 'open' : ''}" id="bqb-${item.id}">
+                    <div class="q-summary">${escapeHtml(item.summary)}</div>
+                    <div class="q-actions">
+                        <button onclick="batchCopyItem(${item.id},event)">📋 Copy tóm tắt</button>
+                        <button onclick="batchSendTTS(${item.id},event)">🔊 Gửi TTS</button>
+                        <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener">🔗 Bài gốc</a>
+                    </div>
+                </div>`;
+            } else if (item.status === 'error') {
+                body = `<div class="q-body ${isOpen ? 'open' : ''}" id="bqb-${item.id}">
+                    <div class="batch-err-msg">${escapeHtml(item.error || 'Lỗi không xác định')}</div>
+                    <div class="q-actions">
+                        <button onclick="batchRetry(${item.id},event)">🔄 Thử lại</button>
+                    </div>
+                </div>`;
+            }
+
+            return `<div class="q-item" id="bqi-${item.id}">
+                <div class="q-header" id="bqh-${item.id}">
+                    <div class="q-num">${item.id + 1}</div>
+                    ${spinner}
+                    <span class="${item.title ? 'q-title' : 'q-url'}" title="${escapeHtml(item.title || item.url)}">${escapeHtml(display)}</span>
+                    <span class="status-chip ${chips[item.status]}">${labels[item.status]}</span>
+                    <span class="status-dot ${dots[item.status]}"></span>
+                    ${chevron}
+                </div>
+                ${body}
+            </div>`;
+        }
+
+        function batchToggle(id) {
+            const item = batchQueue[id];
+            if (item.status !== 'done' && item.status !== 'error') return;
+            batchOpen.has(id) ? batchOpen.delete(id) : batchOpen.add(id);
+            batchUpdateItem(item);
+        }
+
+        function batchUpdateItem(item) {
+            const el = document.getElementById('bqi-' + item.id);
+            if (!el) return;
+            el.outerHTML = batchRenderItem(item);
+            const h = document.getElementById('bqh-' + item.id);
+            if (h) h.onclick = () => batchToggle(item.id);
+        }
+
+        function batchUpdateStats() {
+            const total = batchQueue.length;
+            const done = batchQueue.filter(i => i.status === 'done').length;
+            const proc = batchQueue.filter(i => i.status === 'scrape' || i.status === 'ai').length;
+            const err = batchQueue.filter(i => i.status === 'error').length;
+            const finished = done + err;
+
+            document.getElementById('bsTotal').textContent = total;
+            document.getElementById('bsDone').textContent = done;
+            document.getElementById('bsProc').textContent = proc;
+            document.getElementById('bsErr').textContent = err;
+            document.getElementById('batchProgressLabel').textContent = finished + ' / ' + total;
+            document.getElementById('batchProgressBar').style.width = (total ? Math.round(finished / total * 100) : 0) + '%';
+
+            const badge = document.getElementById('batchQueueBadge');
+            if (finished === total && total > 0) {
+                badge.textContent = 'Hoàn tất ✅';
+                badge.style.cssText = 'font-size:0.75em;font-weight:600;padding:3px 8px;border-radius:20px;margin-left:6px;background:#d1fae5;color:#065f46';
+                document.getElementById('batchExportRow').classList.add('show');
+                // Auto-expand item đầu tiên done
+                const firstDone = batchQueue.find(i => i.status === 'done');
+                if (firstDone && !batchOpen.has(firstDone.id)) { batchOpen.add(firstDone.id); batchRender(); }
+            } else if (proc > 0) {
+                badge.textContent = 'Đang chạy...';
+                badge.style.cssText = 'font-size:0.75em;font-weight:600;padding:3px 8px;border-radius:20px;margin-left:6px;background:#fff8e1;color:#b45309';
+            }
+        }
+
+        async function batchRun() {
+            if (batchRunning) return;
+            batchRunning = true;
+            for (let i = 0; i < batchQueue.length; i++) {
+                if (batchQueue[i].status !== 'wait') continue;
+                await batchProcessItem(i);
+                if (i < batchQueue.length - 1) await new Promise(r => setTimeout(r, 2500)); // delay tránh rate limit
+            }
+            batchRunning = false;
+        }
+
+        async function batchProcessItem(idx) {
+            const item = batchQueue[idx];
+            item.status = 'scrape';
+            batchUpdateItem(item); batchUpdateStats();
+
+            try {
+                const scrapeRes = await fetch('/api/scrape', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: item.url })
+                });
+                const scrapeData = await scrapeRes.json();
+                if (!scrapeData.success) throw new Error(scrapeData.error || 'Không lấy được nội dung');
+
+                item.title = scrapeData.title || item.url;
+                item.status = 'ai';
+                batchUpdateItem(item); batchUpdateStats();
+
+                const aiRes = await fetch('/api/summarize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: scrapeData.content })
+                });
+                const aiData = await aiRes.json();
+                if (!aiData.success) throw new Error(aiData.error || 'Tóm tắt thất bại');
+
+                item.summary = aiData.summary;
+                item.status = 'done';
+            } catch (e) {
+                item.status = 'error';
+                item.error = e.message;
+                batchOpen.add(item.id);
+            }
+
+            batchUpdateItem(item); batchUpdateStats();
+        }
+
+        async function batchRetry(id, e) {
+            e && e.stopPropagation();
+            const item = batchQueue[id];
+            item.status = 'wait'; item.error = null;
+            batchOpen.delete(id);
+            batchUpdateItem(item); batchUpdateStats();
+            await batchProcessItem(id);
+        }
+
+        function batchCopyItem(id, e) {
+            e && e.stopPropagation();
+            const item = batchQueue[id];
+            if (!item.summary) return;
+            navigator.clipboard.writeText(item.summary).then(() => {
+                const btn = e.target.closest('button');
+                if (btn) { const o = btn.textContent; btn.textContent = '✅ Đã copy!'; setTimeout(() => btn.textContent = o, 1800); }
+            });
+        }
+
+        function batchSendTTS(id, e) {
+            e && e.stopPropagation();
+            const item = batchQueue[id];
+            const ttsEl = document.getElementById('ttsText');
+            if (ttsEl && item.summary) {
+                ttsEl.value = item.summary;
+                ttsEl.dispatchEvent(new Event('input'));
+                ttsEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function batchExport(type) {
+            const done = batchQueue.filter(i => i.status === 'done' && i.summary);
+            if (!done.length) return;
+            if (type === 'text') {
+                const text = done.map((i, n) => `=== Bài ${n+1}: ${i.title || i.url} ===\n${i.summary}`).join('\n\n');
+                navigator.clipboard.writeText(text).then(() => alert('Đã copy ' + done.length + ' tóm tắt!'));
+            } else {
+                const blob = new Blob([JSON.stringify(done.map(i => ({ url: i.url, title: i.title, summary: i.summary })), null, 2)], { type: 'application/json' });
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'batch-summaries.json'; a.click();
+            }
+        }
+        // ===== END BATCH QUEUE =====
+
+        window.addEventListener('load', () => {
+            urlInput.focus();
+            loadTrending();
+            // THÊM DÒNG NÀY:
+            document.getElementById('batchUrlInput').addEventListener('input', batchUpdateCount);
         });
     </script>
 </body>
