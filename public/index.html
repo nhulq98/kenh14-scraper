@@ -1417,7 +1417,7 @@
         .q-header:hover { background: var(--bg-light); }
         .q-num { width: 22px; height: 22px; border-radius: 50%; background: var(--bg-light); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: var(--text-secondary); flex-shrink: 0; }
         .q-url { font-size: 12px; color: var(--text-secondary); font-family: monospace; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .q-title { font-size: 0.9em; font-weight: 600; color: var(--text-primary); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .q-title { font-size: 16px; font-weight: 600; color: var(--text-primary); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .status-chip { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
         .chip-wait { background: #f1f1f1; color: #888; }
         .chip-scrape { background: #fff8e1; color: #b45309; }
@@ -1435,12 +1435,12 @@
         .q-body { display: none; padding: 0 14px 12px; background: white; border-top: 1px solid var(--border); }
         .q-body.open { display: block; animation: fadeIn 0.2s ease; }
         .q-summary { font-size: 0.9em; line-height: 1.75; color: var(--text-primary); border-left: 3px solid var(--border); padding-left: 10px; margin: 10px 0; white-space: pre-line; }
-        .q-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .q-actions { display: flex; gap: 6px; flex-wrap: wrap; width: fit-content; }
         .q-actions button, .q-actions a { font-size: 12px; padding: 5px 10px; border: 1.5px solid var(--border); border-radius: 8px; background: white; color: var(--text-primary); cursor: pointer; text-decoration: none; display: flex; align-items: center; gap: 4px; transition: all 0.2s; }
         .q-actions button:hover, .q-actions a:hover { background: var(--bg-light); border-color: var(--text-secondary); }
 
-        .batch-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
-        .batch-stat { background: var(--bg-light); border-radius: 8px; padding: 10px 12px; }
+        .batch-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; width: fit-content; }
+        .batch-stat { background: var(--bg-light); border-radius: 8px; padding: 0px 12px; }
         .batch-stat-n { font-size: 20px; font-weight: 700; color: var(--text-primary); }
         .batch-stat-l { font-size: 0.9em; color: var(--text-secondary); margin-top: 2px; }
 
@@ -1688,7 +1688,7 @@
 
         <!-- ===== BATCH QUEUE SECTION ===== -->
         <div class="section batch-section" style="margin-bottom: 25px;">
-            <div class="section-title">⚡ Batch Xử Lý (Từ link -> tóm tắt chỉ với 1 nút nhấn)</div>
+            <div class="section-title">⚡ Xử Lý Hàng Loạt (Từ link -> tóm tắt,voice chỉ với 1 nút nhấn)</div>
 
             <!-- Input -->
             <div id="batchInputArea">
@@ -1719,15 +1719,17 @@
                 <div class="batch-stats">
                     <div class="batch-stat"><div class="batch-stat-n" id="bsTotal">0</div><div class="batch-stat-l">Tổng</div></div>
                     <div class="batch-stat"><div class="batch-stat-n" id="bsDone" style="color:var(--success)">0</div><div class="batch-stat-l">Hoàn thành</div></div>
-                    <div class="batch-stat"><div class="batch-stat-n" id="bsProc" style="color:#8E44AD">0</div><div class="batch-stat-l">Đang xử lý</div></div>
+                    <div class="batch-stat"><div class="batch-stat-n" id="bsProc" style="color:#000">0</div><div class="batch-stat-l">Đang xử lý</div></div>
                     <div class="batch-stat"><div class="batch-stat-n" id="bsErr" style="color:var(--error)">0</div><div class="batch-stat-l">Lỗi</div></div>
                 </div>
 
                 <div id="batchQueueList"></div>
 
                 <div class="batch-export" id="batchExportRow">
-                    <button class="btn-secondary btn-read" style="font-size:0.85em;padding:8px 14px;border: 2px solid #e03;" onclick="batchStartTTSAll()">🔊 Bắt đầu đọc hàng loạt</button>
-                    <button class="btn-secondary" style="font-size:0.85em;padding:8px 14px" onclick="batchExport('text')">📋 Copy tất cả tóm tắt</button>
+                    <button class="btn-secondary btn-read" style="font-size:0.85em;padding:8px 14px;border: 2px solid #e03;display: flex;flex-direction: column;gap: 5px;" onclick="batchStartTTSAll()">🔊 Bắt đầu đọc hàng loạt
+                        <span style="font-size: 10px;font-weight: 100;">* Tốc độ & giọng được lấy từ TTS bên dưới</span>
+                    </button>
+                    <!-- <button class="btn-secondary" style="font-size:0.85em;padding:8px 14px" onclick="batchExport('text')">📋 Copy tất cả tóm tắt</button> -->
                     <!-- <button class="btn-secondary" style="font-size:0.85em;padding:8px 14px" onclick="batchExport('json')">⬇ Export JSON</button> -->
                     <button class="btn-primary" style="font-size:0.85em;padding:8px 14px" onclick="batchReset()">＋ Batch mới</button>
                 </div>
@@ -1736,7 +1738,7 @@
 
         <!-- Viettel TTS Section - Multi-Step Form -->
         <div class="section tts-section">
-            <div class="section-title">🔊 Viettel Text-to-Speech</div>
+            <div class="section-title">🔊 Text-to-Speech</div>
 
             <div class="tts-form">
                 <!-- Step Indicators -->
@@ -2808,12 +2810,12 @@
                     ? item._ttsText
                     : (item.title ? item.title.trimEnd().replace(/\.+$/, '') + '.\n\n' : '') + (item.summary || '');
 
-                const tabs = ['sum','ori','tts'];
-                const tabLabels = ['✨ Tóm tắt AI','📄 Nội dung gốc','🔊 TTS'];
+                const tabs = ['sum','tts', 'ori'];
+                const tabLabels = ['✨ Tóm tắt AI','🔊 Text to speech','📄 Nội dung gốc'];
 
                 const tabBar = tabs.map((t,i) => `
                     <button onclick="batchSwitchTab(${item.id},'${t}',event)"
-                        style="font-size:16px;font-weight:${activeTab===t?'600':'500'};padding:8px 14px;border:none;background:transparent;cursor:pointer;
+                        style="font-size:14px;font-weight:${activeTab===t?'600':'500'};padding:8px 14px;border:none;background:transparent;cursor:pointer;
                         border-bottom:2px solid ${activeTab===t?'var(--primary)':'transparent'};
                         color:${activeTab===t?'var(--text-primary)':'var(--text-secondary)'};
                         margin-bottom:-0.5px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px">
@@ -2859,16 +2861,7 @@
                             <div style="font-size:13px;line-height:1.75;color:var(--text-primary);white-space:pre-line;border-left:3px solid var(--border);padding-left:10px;margin-bottom:12px">${escapeHtml(item.summary)}</div>
                             <div class="q-actions">
                                 <button onclick="batchCopyItem(${item.id},event)">📋 Copy tóm tắt</button>
-                                <button onclick="batchSwitchTab(${item.id},'tts',event)">🔊 Chuyển sang TTS</button>
-                                <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener">🔗 Bài gốc</a>
-                            </div>
-                        </div>
-
-                        <div id="bqpane-${item.id}-ori" style="display:${activeTab==='ori'?'block':'none'}">
-                            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px">${charCount} ký tự · ${wordCount} từ</div>
-                            <div style="font-size:12px;line-height:1.7;color:var(--text-secondary);max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--bg-light);white-space:pre-wrap;word-break:break-word;margin-bottom:12px">${escapeHtml(item.content||'Không có nội dung gốc')}</div>
-                            <div class="q-actions">
-                                <button onclick="batchCopyOriginal(${item.id},event)">📋 Copy nội dung gốc</button>
+                                <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener">🔗 Link Bài gốc</a>
                             </div>
                         </div>
 
@@ -2879,20 +2872,28 @@
                             </div>
                             <textarea id="bqtts-${item.id}"
                                 oninput="batchTtsTextChange(${item.id})"
-                                style="width:100%;min-height:120px;font-size:13px;line-height:1.7;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-light);color:var(--text-primary);resize:vertical;font-family:inherit;margin-bottom:10px"
+                                style="width:100%;field-sizing:content;min-height:100px;font-size:13px;line-height:1.7;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-light);color:var(--text-primary);resize:vertical;font-family:inherit;margin-bottom:2px"
                             >${escapeHtml(ttsText)}</textarea>
-                            <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+                            <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap; width: 30%">
                                 <button id="bqreadbtn-${item.id}" onclick="batchReadTTS(${item.id},event)" class="btn-read"
-                                    style="font-size:0.85em;padding:10px 16px">
+                                    style="font-size:12px;padding:5px 10px">
                                     🔊 Đọc văn bản
                                 </button>
                                 <button onclick="batchResetTtsText(${item.id},event)" class="btn-read"
-                                    style="font-size:0.85em;padding:10px 16px">
-                                    ↩ Reset
+                                    style="font-size:12px;padding:5px 10px">
+                                    ↩ Reset Text
                                 </button>
                             </div>
                             ${ttsStatusHtml}
                             ${audioHtml}
+                        </div>
+
+                        <div id="bqpane-${item.id}-ori" style="display:${activeTab==='ori'?'block':'none'}">
+                            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px">${charCount} ký tự · ${wordCount} từ</div>
+                            <div style="font-size:12px;line-height:1.7;color:var(--text-secondary);max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--bg-light);white-space:pre-wrap;word-break:break-word;margin-bottom:12px">${escapeHtml(item.content||'Không có nội dung gốc')}</div>
+                            <div class="q-actions">
+                                <button onclick="batchCopyOriginal(${item.id},event)">📋 Copy nội dung gốc</button>
+                            </div>
                         </div>
 
                     </div>
@@ -3206,13 +3207,21 @@
             batchUpdateItem(item);
         }
 
+        function batchGetFilename(id, ext) {
+            const item = batchQueue[id];
+            const title = (item.title || 'audio').replace(/[\\/:*?"<>|]/g, '').trim();
+            const now = new Date();
+            const date = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
+            return `${title}_${date}.${ext}`;
+        }
+
         function batchDownloadAudio(id, fmt, e) {
             e && e.stopPropagation();
             const item = batchQueue[id];
             if (!item._audioUrl) return;
             const a = document.createElement('a');
             a.href = item._audioUrl;
-            a.download = `audio_${id+1}_${Date.now()}.mp3`;
+            a.download = batchGetFilename(id, 'mp3');
             a.click();
         }
 
@@ -3228,7 +3237,7 @@
                 const wavBlob = encodeAudioToWav(audioBuf); // hàm này đã có trong index.html
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(wavBlob);
-                a.download = `audio_${id+1}_${Date.now()}.wav`;
+                a.download = batchGetFilename(id, 'wav');
                 a.click();
             } catch(err) {
                 alert('Lỗi convert WAV: ' + err.message);
