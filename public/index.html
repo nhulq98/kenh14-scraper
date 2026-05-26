@@ -209,7 +209,7 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary), #52c41a);
+            background: linear-gradient(135deg, #ff4655cc, #52c41aad);
             color: white;
             flex: 2;
         }
@@ -1261,7 +1261,7 @@
         }
 
         .btn-read:hover:not(:disabled) {
-            background: #e03;
+            background: #e72525c2;
             color: white;
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(239, 83, 80, 0.3);
@@ -1413,8 +1413,8 @@
         .batch-section .section-title::before { background: #378ADD; }
 
         .q-item { border: 0.5px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 8px; }
-        .q-header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: white; cursor: pointer; user-select: none; transition: background 0.2s; }
-        .q-header:hover { background: var(--bg-light); }
+        .q-header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: aliceblue; cursor: pointer; user-select: none; transition: background 0.2s; }
+        .q-header:hover { background: #b5d9f9; }
         .q-num { width: 22px; height: 22px; border-radius: 50%; background: var(--bg-light); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: var(--text-secondary); flex-shrink: 0; }
         .q-url { font-size: 12px; color: var(--text-secondary); font-family: monospace; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .q-title { font-size: 16px; font-weight: 600; color: var(--text-primary); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1726,7 +1726,7 @@
                 <div id="batchQueueList"></div>
 
                 <div class="batch-export" id="batchExportRow">
-                    <button class="btn-secondary btn-read" style="font-size:0.85em;padding:8px 14px;border: 2px solid #e03;display: flex;flex-direction: column;gap: 5px;" onclick="batchStartTTSAll()">🔊 Bắt đầu đọc hàng loạt
+                    <button class="btn-secondary btn-read" style="font-size:0.85em;padding:8px 14px;border: 2px solid #ee003336;display: flex;flex-direction: column;gap: 5px;" onclick="batchStartTTSAll()">🔊 Bắt đầu đọc hàng loạt
                         <span style="font-size: 10px;font-weight: 100;">* Tốc độ & giọng được lấy từ TTS bên dưới</span>
                     </button>
                     <!-- <button class="btn-secondary" style="font-size:0.85em;padding:8px 14px" onclick="batchExport('text')">📋 Copy tất cả tóm tắt</button> -->
