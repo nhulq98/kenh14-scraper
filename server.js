@@ -121,6 +121,15 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+app.get('/common/css/common.css', (req, res) => {
+    res.sendFile(path.join(__dirname, 'src', 'views', 'common', 'css', 'common.css'));
+});
+
+app.get('/common/js/common.js', (req, res) => {
+    res.sendFile(path.join(__dirname, 'src', 'views', 'common', 'js', 'common.js'));
+});
+
+
 // ============================================================
 // SCRAPE ENDPOINT
 // ============================================================
