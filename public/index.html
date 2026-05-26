@@ -3100,6 +3100,9 @@
         }
 
         async function batchStartTTSAll() {
+
+            //switch tab sang TTS của item đầu tiên có summary để render sẵn voice/speed select
+            batchSwitchTab(0,'tts',event);
             const done = batchQueue.filter(i => i.status === 'done' && i.summary);
             if (!done.length) return;
 
