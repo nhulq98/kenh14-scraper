@@ -1887,6 +1887,8 @@
         const geminiStatus = document.getElementById('geminiStatus');
         const geminiCount = document.getElementById('geminiCount');
 
+        const BATCH_HISTORY_KEY = 'batch_history_v1';
+
         // Event Listeners
         scrapeBtn.addEventListener('click', scrapeArticle);
         clearInput.addEventListener('click', clearAll);
@@ -2033,6 +2035,9 @@
         window.addEventListener('load', () => {
             urlInput.focus();
             loadTrending()
+
+            // THÊM DÒNG NÀY
+            batchLoadHistory();
         });
 
         // ===== TRENDING FUNCTIONS =====
@@ -2774,11 +2779,18 @@
         }
 
         function batchReset() {
+            // Revoke blob URLs tránh memory leak
+            batchQueue.forEach(i => i._audioUrl && URL.revokeObjectURL(i._audioUrl));
+
             batchQueue = []; batchRunning = false; batchOpen = new Set();
             document.getElementById('batchInputArea').style.display = 'block';
             document.getElementById('batchQueueArea').style.display = 'none';
+            document.getElementById('batchExportRow').classList.remove('show');
             document.getElementById('batchUrlInput').value = '';
             batchUpdateCount();
+
+            // THÊM: xóa history cũ khi bắt đầu batch mới
+            batchClearHistory();
         }
 
         function batchRender() {
@@ -2791,6 +2803,9 @@
 
         function batchRenderItem(item) {
             const chips = { wait:'chip-wait', scrape:'chip-scrape', ai:'chip-ai', done:'chip-done', error:'chip-err' };
+            const ttsChip = item._ttsStatus === 'done'
+                ? `<span class="status-chip" style="background:#e8f4fd;color:#1565c0;font-size:11px;font-weight:600;padding:3px 8px;border-radius:4px;white-space:nowrap;flex-shrink:0">🔊 Đã đọc</span>`
+                : '';
             const labels = { wait:'Chờ', scrape:'Đang scrape', ai:'Đang tóm tắt', done:'Hoàn thành', error:'Lỗi' };
             const dots = { wait:'dot-wait', scrape:'dot-scrape', ai:'dot-ai', done:'dot-done', error:'dot-err' };
             const isOpen = batchOpen.has(item.id);
@@ -2838,13 +2853,13 @@
                     ? `<div style="background:var(--bg-light);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px">
                         <div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px">Giọng: ${selectedVoice||'hn-quynhanh'} · Tốc độ: ${document.getElementById('speedSelect')?.value||1}x</div>
                         <audio controls src="${item._audioUrl}" style="width:100%;height:36px;margin-bottom:8px;border-radius:4px"></audio>
-                        <div style="display:flex;gap:6px">
+                        <div style="display:flex;gap:6px; width: 30%;">
                             <button onclick="batchDownloadAudio(${item.id},'mp3',event)" class="btn-read"
-                                style="font-size:0.85em;padding:10px 16px">
+                                style="font-size: 12px;padding: 5px 10px;">
                                 ⬇ Tải MP3
                             </button>
                             <button onclick="batchDownloadAudioWav(${item.id},event)" class="btn-read"
-                                style="font-size:0.85em;padding:10px 16px">
+                                style="font-size: 12px;padding: 5px 10px;">
                                 ⬇ Tải WAV
                             </button>
                         </div>
@@ -2861,7 +2876,6 @@
                             <div style="font-size:13px;line-height:1.75;color:var(--text-primary);white-space:pre-line;border-left:3px solid var(--border);padding-left:10px;margin-bottom:12px">${escapeHtml(item.summary)}</div>
                             <div class="q-actions">
                                 <button onclick="batchCopyItem(${item.id},event)">📋 Copy tóm tắt</button>
-                                <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener">🔗 Link Bài gốc</a>
                             </div>
                         </div>
 
@@ -2874,7 +2888,7 @@
                                 oninput="batchTtsTextChange(${item.id})"
                                 style="width:100%;field-sizing:content;min-height:100px;font-size:13px;line-height:1.7;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-light);color:var(--text-primary);resize:vertical;font-family:inherit;margin-bottom:2px"
                             >${escapeHtml(ttsText)}</textarea>
-                            <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap; width: 30%">
+                            <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap; width: 30%; margin-left: 10px;">
                                 <button id="bqreadbtn-${item.id}" onclick="batchReadTTS(${item.id},event)" class="btn-read"
                                     style="font-size:12px;padding:5px 10px">
                                     🔊 Đọc văn bản
@@ -2911,8 +2925,14 @@
                 <div class="q-header" id="bqh-${item.id}">
                     <div class="q-num">${item.id + 1}</div>
                     ${spinner}
-                    <span class="${item.title ? 'q-title' : 'q-url'}" title="${escapeHtml(item.title || item.url)}">${escapeHtml(display)}</span>
+                    <span class="${item.title ? 'q-title' : 'q-url'}" ...>${escapeHtml(display)}</span>
+                    ${item.title ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener"
+                        onclick="event.stopPropagation()"
+                        style="font-size:11px;padding:3px 8px;border:0.5px solid var(--border);border-radius:4px;background:transparent;color:var(--text-secondary);text-decoration:none;white-space:nowrap;flex-shrink:0;display:inline-flex;align-items:center;gap:3px">
+                        🔗 Bài gốc
+                    </a>` : ''}
                     <span class="status-chip ${chips[item.status]}">${labels[item.status]}</span>
+                    ${ttsChip}
                     <span class="status-dot ${dots[item.status]}"></span>
                     ${chevron}
                 </div>
@@ -2972,6 +2992,7 @@
                 if (i < batchQueue.length - 1) await new Promise(r => setTimeout(r, 2500)); // delay tránh rate limit
             }
             batchRunning = false;
+            batchSaveHistory();
         }
 
         async function batchProcessItem(idx) {
@@ -3085,15 +3106,25 @@
             const voice = selectedVoice || 'hn-quynhanh';
             const speed = parseFloat(document.getElementById('speedSelect')?.value || 1);
 
-            // --- Phase 1: Convert song song tất cả ---
-            const convertPromises = done.map(item => batchConvertTTS(item, voice, speed));
-            await Promise.allSettled(convertPromises);
+            for (let i = 0; i < done.length; i++) {
+                await batchConvertTTS(done[i], voice, speed);
+                if (i < done.length - 1) await new Promise(r => setTimeout(r, 2000));
+            }
 
-            // --- Phase 2: Phát tuần tự ---
             for (const item of done) {
-                if (!item._audioUrl) continue; // skip item lỗi
-                await batchConvertTTS(item, voice, speed);
-                await new Promise(r => setTimeout(r, 4000));
+                if (!item._audioUrl) continue;
+                await batchPlayItem(item);
+            }
+
+            batchQueue.forEach(i => i.status === 'done' && batchUpdateItem(i));
+
+            const first = done[0];
+            if (first) {
+                first._tab = 'tts';
+                batchOpen.add(first.id);
+                batchUpdateItem(first);
+                document.getElementById('bqi-' + first.id)
+                    ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
 
@@ -3242,6 +3273,70 @@
             } catch(err) {
                 alert('Lỗi convert WAV: ' + err.message);
             }
+        }
+
+        function batchSaveHistory() {
+            const snapshot = batchQueue.map(item => ({
+                id: item.id,
+                url: item.url,
+                title: item.title || null,
+                content: item.content || null,
+                summary: item.summary || null,
+                status: item.status,
+                error: item.error || null,
+            }));
+            try {
+                localStorage.setItem(BATCH_HISTORY_KEY, JSON.stringify({
+                    savedAt: new Date().toISOString(),
+                    queue: snapshot
+                }));
+            } catch(e) {
+                console.warn('Lưu history thất bại:', e.message);
+            }
+        }
+
+        function batchLoadHistory() {
+            try {
+                const raw = localStorage.getItem(BATCH_HISTORY_KEY);
+                if (!raw) return false;
+                const data = JSON.parse(raw);
+                if (!data.queue || !data.queue.length) return false;
+
+                batchQueue = data.queue.map(item => ({
+                    ...item,
+                    _audioUrl: null,   // blob không restore được
+                    _audioBlob: null,
+                    _ttsStatus: item._ttsStatus === 'done' ? 'done' : item._ttsStatus,
+                }));
+                batchOpen = new Set();
+
+                // Auto-open item đầu tiên done
+                const first = batchQueue.find(i => i.status === 'done');
+                if (first) {
+                    first._tab = first._tab || 'sum';
+                    batchOpen.add(first.id);
+                }
+
+                document.getElementById('batchInputArea').style.display = 'none';
+                document.getElementById('batchQueueArea').style.display = 'block';
+                batchRender();
+                batchUpdateStats();
+
+                // Show banner thông báo
+                const label = document.getElementById('batchProgressLabel');
+                const savedAt = new Date(data.savedAt).toLocaleString('vi-VN');
+                if (label) label.title = `Khôi phục từ: ${savedAt}`;
+
+                console.log(`📂 Batch history loaded (saved: ${savedAt})`);
+                return true;
+            } catch(e) {
+                console.warn('Load history thất bại:', e.message);
+                return false;
+            }
+        }
+
+        function batchClearHistory() {
+            localStorage.removeItem(BATCH_HISTORY_KEY);
         }
     </script>
 </body>
