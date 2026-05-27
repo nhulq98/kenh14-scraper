@@ -954,7 +954,7 @@ function batchRenderItem(item) {
             : (item.title ? item.title.trimEnd().replace(/\.+$/, '') + '.\n\n' : '') + (item.summary || '');
 
         const tabs = ['sum','tts', 'ori'];
-        const tabLabels = ['✨ Tóm tắt AI','🔊 Text to speech','📄 Nội dung gốc'];
+        const tabLabels = ['✨ Tóm tắt AI','🔊 Chuyển sang giọng nói (TTS)','📄 Nội dung gốc'];
 
         const tabBar = tabs.map((t,i) => `
             <button onclick="batchSwitchTab(${item.id},'${t}',event)"
@@ -1001,7 +1001,7 @@ function batchRenderItem(item) {
             <div style="padding:12px 14px 14px">
 
                 <div id="bqpane-${item.id}-sum" style="display:${activeTab==='sum'?'block':'none'}">
-                    <div style="font-size:13px;line-height:1.75;color:var(--text-primary);white-space:pre-line;border-left:3px solid var(--border);padding-left:10px;margin-bottom:12px">${escapeHtml(item.summary)}</div>
+                    <div style="font-size:13px;line-height:1.75;color:var(--text-primary);white-space:pre-line;border-left:3px solid var(--border);padding-left:10px;margin-bottom:12px;background:var(--bg-light)">${escapeHtml(item.summary)}</div>
                     <div class="q-actions">
                         <button onclick="batchCopyItem(${item.id},event)">📋 Copy tóm tắt</button>
                     </div>
@@ -1014,7 +1014,7 @@ function batchRenderItem(item) {
                     </div>
                     <textarea id="bqtts-${item.id}"
                         oninput="batchTtsTextChange(${item.id})"
-                        style="width:100%;field-sizing:content;min-height:100px;font-size:13px;line-height:1.7;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-light);color:var(--text-primary);resize:vertical;font-family:inherit;margin-bottom:2px"
+                        style="width:100%;field-sizing:content;min-height:100px;font-size:13px;line-height:1.7;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:white;color:var(--text-primary);resize:vertical;font-family:inherit;margin-bottom:2px"
                     >${escapeHtml(ttsText)}</textarea>
                     <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap; width: 30%; margin-left: 10px;">
                         <button id="bqreadbtn-${item.id}" onclick="batchReadTTS(${item.id},event)" class="btn-read"
@@ -1028,7 +1028,7 @@ function batchRenderItem(item) {
 
                 <div id="bqpane-${item.id}-ori" style="display:${activeTab==='ori'?'block':'none'}">
                     <div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px">${charCount} ký tự · ${wordCount} từ</div>
-                    <div style="font-size:12px;line-height:1.7;color:var(--text-secondary);max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--bg-light);white-space:pre-wrap;word-break:break-word;margin-bottom:12px">${escapeHtml(item.content||'Không có nội dung gốc')}</div>
+                    <div style="font-size:12px;line-height:1.7;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--bg-light);white-space:pre-wrap;word-break:break-word;margin-bottom:12px">${escapeHtml(item.content||'Không có nội dung gốc')}</div>
                     <div class="q-actions">
                         <button onclick="batchCopyOriginal(${item.id},event)">📋 Copy nội dung gốc</button>
                     </div>
@@ -1235,7 +1235,7 @@ async function batchStartTTSAll() {
 
     for (let i = 0; i < done.length; i++) {
         await batchConvertTTS(done[i], voice, speed);
-        if (i < done.length - 1) await new Promise(r => setTimeout(r, 1000));
+        if (i < done.length - 1) await new Promise(r => setTimeout(r, 10)); // rate limit TTS API max = 15rq/s
     }
 
     for (const item of done) {

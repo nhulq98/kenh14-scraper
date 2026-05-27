@@ -280,8 +280,12 @@
                 <div id="batchQueueList"></div>
 
                 <div class="batch-export" id="batchExportRow">
-                    <button class="btn-secondary btn-read" style="font-size:0.85em;padding:8px 14px;border: 1.5px solid #ee003336;display: flex;flex-direction: column;gap: 5px;" onclick="batchStartTTSAll()">🔊 Bắt đầu đọc hàng loạt
-                        <span style="font-size: 10px;font-weight: 100;">* Tốc độ & giọng được lấy từ TTS bên dưới</span>
+                    <button class="btn-secondary btn-read" 
+                        style="font-size:0.85em;padding:8px 14px;border:1.5px solid #ee003336;display:flex;flex-direction:column;gap:5px;" 
+                        onclick="batchStartTTSAll()"
+                        title="Check & Edit Text ở TTS tab trước khi chạy">
+                        🔊 Bắt đầu đọc hàng loạt
+                        <span style="font-size:10px;font-weight:100;">* Tốc độ & giọng được lấy từ TTS bên dưới</span>
                     </button>
                     <!-- <button class="btn-secondary" style="font-size:0.85em;padding:8px 14px" onclick="batchExport('text')">📋 Copy tất cả tóm tắt</button> -->
                     <!-- <button class="btn-secondary" style="font-size:0.85em;padding:8px 14px" onclick="batchExport('json')">⬇ Export JSON</button> -->
