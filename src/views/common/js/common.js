@@ -1001,7 +1001,7 @@ function batchRenderItem(item) {
             <div style="padding:12px 14px 14px">
 
                 <div id="bqpane-${item.id}-sum" style="display:${activeTab==='sum'?'block':'none'}">
-                    <div style="font-size:13px;line-height:1.75;color:var(--text-primary);white-space:pre-line;border-left:3px solid var(--border);padding-left:10px;margin-bottom:12px;background:var(--bg-light)">${escapeHtml(item.summary)}</div>
+                    <div style="font-size:13px;line-height:1.75;color:var(--text-primary);white-space:pre-line;border:1px solid var(--border);padding-left:10px;margin-bottom:12px;background:var(--bg-light); padding:10px 12px; border-radius: 8px;">${escapeHtml(item.summary)}</div>
                     <div class="q-actions">
                         <button onclick="batchCopyItem(${item.id},event)">📋 Copy tóm tắt</button>
                     </div>
