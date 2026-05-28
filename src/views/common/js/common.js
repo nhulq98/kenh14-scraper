@@ -1233,10 +1233,13 @@ async function batchStartTTSAll() {
     const voice = selectedVoice || 'hn-quynhanh';
     const speed = parseFloat(document.getElementById('speedSelect')?.value || 1);
 
-    for (let i = 0; i < done.length; i++) {
-        await batchConvertTTS(done[i], voice, speed);
-        if (i < done.length - 1) await new Promise(r => setTimeout(r, 10)); // rate limit TTS API max = 15rq/s
-    }
+    // for (let i = 0; i < done.length; i++) {
+    //     await batchConvertTTS(done[i], voice, speed);
+    //     if (i < done.length - 1) await new Promise(r => setTimeout(r, 10)); // rate limit TTS API max = 15rq/s
+    // }
+
+        // Song song tất cả
+    await Promise.all(done.map(item => batchConvertTTS(item, voice, speed)));
 
     for (const item of done) {
         if (!item._audioUrl) continue;
