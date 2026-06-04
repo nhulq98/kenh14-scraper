@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kênh14 & Saostar Scraper + Gemini AI</title>
     <link rel="stylesheet" href="/common/css/common.css">
+    <link rel="stylesheet" href="/batch/css/batch.css">
 </head>
 
 <body>
@@ -247,14 +248,18 @@
             <!-- Input -->
             <div id="batchInputArea">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                    <span style="font-size:0.85em;color:var(--text-secondary)">Dán danh sách URL — mỗi dòng 1 URL (tối đa 10)</span>
+                    <span style="font-size:0.85em;color:var(--text-secondary)">Dán danh sách URL — mỗi dòng 1 URL (tối
+                        đa 10)</span>
                     <span style="font-size:0.8em;font-weight:600;color:var(--accent)" id="batchUrlCount">0 URLs</span>
                 </div>
-                <textarea id="batchUrlInput" style="width:100%;height:100px;resize:vertical;font-family:monospace;font-size:0.85em;padding:10px 12px;border:2px solid var(--border);border-radius:10px;background:var(--bg-light);color:var(--text-primary);line-height:1.6"
+                <textarea id="batchUrlInput"
+                    style="width:100%;height:100px;resize:vertical;font-family:monospace;font-size:0.85em;padding:10px 12px;border:2px solid var(--border);border-radius:10px;background:var(--bg-light);color:var(--text-primary);line-height:1.6"
                     placeholder="https://kenh14.vn/bai-viet-1.chn&#10;https://kenh14.vn/bai-viet-2.chn&#10;https://saostar.vn/bai-viet-3.html"></textarea>
                 <div style="display:flex;gap:8px;margin-top:10px">
-                    <button class="btn-primary" style="flex:2;padding:10px" onclick="batchStart()">⚡ Xử lý hàng loạt</button>
-                    <button class="btn-secondary" style="flex:1" onclick="document.getElementById('batchUrlInput').value='';batchUpdateCount()">🗑 Xóa</button>
+                    <button class="btn-primary" style="flex:2;padding:10px" onclick="batchStart()">⚡ Xử lý hàng
+                        loạt</button>
+                    <button class="btn-secondary" style="flex:1"
+                        onclick="document.getElementById('batchUrlInput').value='';batchUpdateCount()">🗑 Xóa</button>
                 </div>
             </div>
 
@@ -263,33 +268,49 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
                     <span style="font-size:0.9em;font-weight:600;color:var(--text-primary)">
                         Hàng đợi
-                        <span id="batchQueueBadge" style="font-size:0.75em;font-weight:600;padding:3px 8px;border-radius:20px;margin-left:6px;background:#f1f1f1;color:#888">Chuẩn bị</span>
+                        <span id="batchQueueBadge"
+                            style="font-size:0.75em;font-weight:600;padding:3px 8px;border-radius:20px;margin-left:6px;background:#f1f1f1;color:#888">Chuẩn
+                            bị</span>
                     </span>
                     <span style="font-size:0.8em;color:var(--text-secondary)" id="batchProgressLabel">0 / 0</span>
                 </div>
 
-                <div class="batch-progress-wrap"><div class="batch-progress" id="batchProgressBar" style="width:0%"></div></div>
+                <div class="batch-progress-wrap">
+                    <div class="batch-progress" id="batchProgressBar" style="width:0%"></div>
+                </div>
 
                 <div class="batch-stats">
-                    <div class="batch-stat"><div class="batch-stat-n" id="bsTotal">0</div><div class="batch-stat-l">Tổng</div></div>
-                    <div class="batch-stat"><div class="batch-stat-n" id="bsDone" style="color:var(--success)">0</div><div class="batch-stat-l">Hoàn thành</div></div>
-                    <div class="batch-stat"><div class="batch-stat-n" id="bsProc" style="color:#000">0</div><div class="batch-stat-l">Đang xử lý</div></div>
-                    <div class="batch-stat"><div class="batch-stat-n" id="bsErr" style="color:var(--error)">0</div><div class="batch-stat-l">Lỗi</div></div>
+                    <div class="batch-stat">
+                        <div class="batch-stat-n" id="bsTotal">0</div>
+                        <div class="batch-stat-l">Tổng</div>
+                    </div>
+                    <div class="batch-stat">
+                        <div class="batch-stat-n" id="bsDone" style="color:var(--success)">0</div>
+                        <div class="batch-stat-l">Hoàn thành</div>
+                    </div>
+                    <div class="batch-stat">
+                        <div class="batch-stat-n" id="bsProc" style="color:#000">0</div>
+                        <div class="batch-stat-l">Đang xử lý</div>
+                    </div>
+                    <div class="batch-stat">
+                        <div class="batch-stat-n" id="bsErr" style="color:var(--error)">0</div>
+                        <div class="batch-stat-l">Lỗi</div>
+                    </div>
                 </div>
 
                 <div id="batchQueueList"></div>
 
                 <div class="batch-export" id="batchExportRow">
-                    <button class="btn-secondary btn-read" 
-                        style="font-size:0.85em;padding:8px 14px;border:1.5px solid #ee003336;display:flex;flex-direction:column;gap:5px;" 
-                        onclick="batchStartTTSAll()"
-                        title="Check & Edit Text ở TTS tab trước khi chạy">
+                    <button class="btn-secondary btn-read"
+                        style="font-size:0.85em;padding:8px 14px;border:1.5px solid #ee003336;display:flex;flex-direction:column;gap:5px;"
+                        onclick="batchStartTTSAll()" title="Check & Edit Text ở TTS tab trước khi chạy">
                         🔊 Bắt đầu đọc hàng loạt
                         <span style="font-size:10px;font-weight:100;">* Tốc độ & giọng được lấy từ TTS bên dưới</span>
                     </button>
                     <!-- <button class="btn-secondary" style="font-size:0.85em;padding:8px 14px" onclick="batchExport('text')">📋 Copy tất cả tóm tắt</button> -->
                     <!-- <button class="btn-secondary" style="font-size:0.85em;padding:8px 14px" onclick="batchExport('json')">⬇ Export JSON</button> -->
-                    <button class="btn-primary" style="font-size:0.85em;padding:8px 14px" onclick="batchReset()">＋ Batch mới</button>
+                    <button class="btn-primary" style="font-size:0.85em;padding:8px 14px" onclick="batchReset()">＋ Batch
+                        mới</button>
                 </div>
             </div>
         </div>
@@ -332,10 +353,8 @@
                 <div class="step-content" id="step2">
                     <div class="step-2-content">
                         <label for="ttsText">Nhập nội dung văn bản Tiếng Việt</label>
-                        <textarea
-                            id="ttsText"
-                            placeholder="Dán hoặc nhập văn bản tiếng Việt tối đa 50,000 ký tự..."
-                        ></textarea>
+                        <textarea id="ttsText"
+                            placeholder="Dán hoặc nhập văn bản tiếng Việt tối đa 50,000 ký tự..."></textarea>
                         <div class="char-count-display">
                             <span id="ttsCharCount">0</span> / 50000 kỳ tự
                             <div class="tts-status" id="ttsStatus"></div>
@@ -376,7 +395,8 @@
                         <div class="speed-panel">
                             <div class="voice-section-title">Thay đổi tốc độ đọc</div>
                             <div class="speed-slider-container">
-                                <input type="range" id="speedSelect" min="0.8" max="1.2" step="0.1" value="1" style="flex: 1;">
+                                <input type="range" id="speedSelect" min="0.8" max="1.2" step="0.1" value="1"
+                                    style="flex: 1;">
                                 <div class="speed-value" id="speedValue">1</div>
                             </div>
                             <div class="speed-buttons-container" id="speedButtons">
@@ -392,7 +412,8 @@
                                 <button class="btn-read" id="convertBtn">
                                     Đọc Văn Bản
                                 </button>
-                                <a class="btn-read" id="convertBtn"  target="_blank" href="https://kenh14-crawler.onrender.com/" style="
+                                <a class="btn-read" id="convertBtn" target="_blank"
+                                    href="https://kenh14-crawler.onrender.com/" style="
                                     text-decoration: none;
                                     display: flex;
                                     justify-content: center;
@@ -429,6 +450,7 @@
     </div>
 
     <script src="/common/js/common.js"></script>
+    <script src="/batch/js/batch.js"></script>
 </body>
 
 </html>

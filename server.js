@@ -129,6 +129,18 @@ app.get('/common/js/common.js', (req, res) => {
     res.sendFile(path.join(__dirname, 'src', 'views', 'common', 'js', 'common.js'));
 });
 
+// ============================================================
+// BATCH ROUTES
+// ============================================================
+
+app.get('/batch/css/batch.css', (req, res) => {
+    res.sendFile(path.join(__dirname, 'src', 'views', 'batch', 'css', 'batch.css'));
+});
+
+app.get('/batch/js/batch.js', (req, res) => {
+    res.sendFile(path.join(__dirname, 'src', 'views', 'batch', 'js', 'batch.js'));
+});
+
 
 // ============================================================
 // SCRAPE ENDPOINT
