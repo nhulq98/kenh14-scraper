@@ -167,7 +167,38 @@ class ScraperService {
         const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
         try {
-            browser = await puppeteer.launch({
+            // Try to find Chrome/Chromium executable
+            let executablePath = undefined;
+            
+            // Check environment variable first (for Render.com and other container environments)
+            if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+                executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+                console.log(`✅ Using Chrome from environment variable: ${executablePath}`);
+            } else {
+                const possiblePaths = [
+                    '/usr/bin/chromium-browser',  // Render.com/Linux (priority)
+                    '/usr/bin/chromium',           // Linux
+                    '/usr/bin/google-chrome',      // Linux
+                    '/snap/bin/chromium',          // Snap package
+                    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',  // macOS
+                    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',     // Windows
+                    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe' // Windows 32-bit
+                ];
+                
+                // Try to find existing Chrome/Chromium installation
+                for (const path of possiblePaths) {
+                    try {
+                        await require('fs').promises.access(path);
+                        executablePath = path;
+                        console.log(`✅ Found Chrome at: ${executablePath}`);
+                        break;
+                    } catch (err) {
+                        // Path doesn't exist, try next one
+                    }
+                }
+            }
+
+            const launchOptions = {
                 headless: headless,
                 args: [
                     '--no-sandbox',
@@ -175,9 +206,17 @@ class ScraperService {
                     '--disable-dev-shm-usage',
                     '--disable-gpu',
                     '--disable-extensions'
-                ],
-                executablePath: '/usr/bin/google-chrome'
-            });
+                ]
+            };
+
+            // Only set executablePath if found
+            if (executablePath) {
+                launchOptions.executablePath = executablePath;
+            } else {
+                console.warn('⚠️  Chrome not found in common paths, using Puppeteer default browser');
+            }
+
+            browser = await puppeteer.launch(launchOptions);
 
             page = await browser.newPage();
             await page.setDefaultNavigationTimeout(15000);
