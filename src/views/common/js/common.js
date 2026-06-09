@@ -290,12 +290,12 @@ function renderPeople(people) {
             const articlesHtml = articles.length > 0
                 ? articles.map(a => `
                     <li class="dropdown-article-item">
-                        <a href="${escapeHtml(a.url)}" target="_blank" rel="noopener" class="dropdown-article-link">
+                        <a href="${escapeHtml(a.href)}" target="_blank" rel="noopener" class="dropdown-article-link">
                             ${escapeHtml(a.title)}
                         </a>
                         <div class="dropdown-article-meta">
                             <span>📌 ${escapeHtml(a.source || 'Unknown')}</span>
-                            <button class="article-copy-btn" style="padding:2px 6px;font-size:0.5em;" onclick="copyArticleLink('${escapeHtml(a.url)}', event)" title="Copy link">📋</button>
+                            <button class="article-copy-btn" style="padding:2px 6px;font-size:0.5em;" onclick="copyArticleLink('${escapeHtml(a.href)}', event)" title="Copy link">📋</button>
                         </div>
                     </li>
                 `).join('')
@@ -386,10 +386,10 @@ function renderArticles(articles) {
         <li class="article-item">
             <div class="article-num">${i + 1}</div>
             <div class="article-info">
-                <a class="article-link" href="${escapeHtml(a.url)}" target="_blank" rel="noopener">${escapeHtml(a.title)}</a>
+                <a class="article-link" href="${escapeHtml(a.href)}" target="_blank" rel="noopener">${escapeHtml(a.title)}</a>
                 <div class="article-source">📌 ${escapeHtml(a.source || '')}</div>
             </div>
-            <button class="article-copy-btn" onclick="copyArticleLink('${escapeHtml(a.url)}', this)" title="Copy link">
+            <button class="article-copy-btn" onclick="copyArticleLink('${escapeHtml(a.href)}', this)" title="Copy link">
                 📋 Copy
             </button>
         </li>`).join('');

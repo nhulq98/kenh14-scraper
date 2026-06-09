@@ -21,10 +21,11 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.x.x",
-    "node-cron": "^4.2.1"
+    "node-cron": "^4.2.1",
+    "puppeteer": "^24.43.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14",
-    "google-trends-api": "^4.9.2"
+    "google-trends-api": "^4.9.2",
+    "nodemon": "^3.1.14"
   }
 }

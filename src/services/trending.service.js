@@ -78,25 +78,127 @@ class TrendingService {
     }
 
     // Scrape tiêu đề bài viết từ Kenh14 star page
+    // Sử dụng Puppeteer với lazy loading support
     async scrapeKenh14Headlines() {
-        const html = await this.scraperService.safeFetch('https://kenh14.vn/star.chn');
-        if (!html) return [];
-        const $ = cheerio.load(html);
-        const titles = [];
-
-        $('h3.knc-title, h3.title, .item-title, .news-title, .box-category-item h3, .knc-box h3, h2.knc-title').each((i, el) => {
-            const t = $(el).text().trim();
-            if (t && t.length > 10) titles.push(t);
+        console.log('⏳ Fetching Kenh14 with lazy load support...');
+        
+        // Thử lấy với Puppeteer (lazy loading)
+        const html = await this.scraperService.fetchWithLazyLoad('https://kenh14.vn/star.chn', {
+            scrollDelay: 6000,
+            scrollPause: 6000,
+            maxScrolls: 20,
+            // New options for additional content loading
+            clickLoadMore: true,  // Click "Bấm để xem thêm" button
+            callLoadListDetail: true,  // Call LoadListDetail() function
+            scrollToBottom: true,  // Scroll all the way to bottom
+            additionalScrolls: 10  // Additional scroll cycles after LoadListDetail
         });
 
-        if (titles.length < 5) {
-            $('h3').each((i, el) => {
-                const t = $(el).text().trim();
-                if (t && t.length > 10) titles.push(t);
+        if (!html) {
+            console.warn('⚠️  Puppeteer fetch failed, fallback to safeFetch');
+            const fallbackHtml = await this.scraperService.safeFetch('https://kenh14.vn/star.chn');
+            if (!fallbackHtml) return [];
+            return this._extractHeadlinesFromHtml(fallbackHtml);
+        }
+
+        return this._extractHeadlinesFromHtml(html);
+    }
+
+    // Helper: Extract headlines từ HTML - FOCUSED extraction (now returns {title, href})
+    _extractHeadlinesFromHtml(html) {
+        const $ = cheerio.load(html);
+        const titles = new Set();  // Use Set để tránh duplicate
+        const articles = [];  // Array to store {title, href} objects
+
+        // PRIMARY: Extract ONLY from role="article" elements (most reliable)
+        $('[role="article"]').each((i, el) => {
+            const $el = $(el);
+            
+            // Look for title in heading tags first
+            let headline = $el.find('h1, h2, h3, h4, h5, h6').first().text().trim();
+            let href = '';
+            
+            // If found in heading, get the href from the heading's link
+            if (headline) {
+                href = $el.find('h1, h2, h3, h4, h5, h6').first().find('a').first().attr('href') || '';
+            }
+            
+            // If not found, try title attribute from any element with title
+            if (!headline) {
+                const titleEl = $el.find('[title]').first();
+                headline = titleEl.attr('title')?.trim();
+                href = titleEl.is('a') ? titleEl.attr('href') || '' : '';
+            }
+            
+            // If not found, try data-title attribute
+            if (!headline) {
+                headline = $el.find('[data-title]').first().attr('data-title')?.trim();
+            }
+            
+            // If not found, look for link text (usually in <a> tag)
+            if (!headline) {
+                const linkEl = $el.find('a').first();
+                headline = linkEl.attr('title')?.trim() || linkEl.find('h4, h3, h2').first().text().trim();
+                href = linkEl.attr('href') || '';
+            }
+            
+            if (headline && headline.length > 10 && headline.length < 500 && !titles.has(headline)) {
+                titles.add(headline);
+                articles.push({
+                    title: headline,
+                    href: "http://kenh14.vn"+href
+                });
+            }
+        });
+
+        // FALLBACK: If no articles found with role="article", extract from article containers
+        if (articles.length === 0) {
+            $('article, .article, .news-item, .post, .story, .item-card, .news-card').each((i, el) => {
+                const $el = $(el);
+                let headline = $el.find('h1, h2, h3, h4, .title, .headline').first().text().trim();
+                let href = '';
+                
+                if (headline) {
+                    href = $el.find('h1, h2, h3, h4, .title, .headline').first().find('a').first().attr('href') || '';
+                }
+                
+                if (!headline) {
+                    const linkEl = $el.find('a').first();
+                    headline = linkEl.attr('title')?.trim();
+                    href = linkEl.attr('href') || '';
+                }
+                
+                if (headline && headline.length > 10 && headline.length < 500 && !titles.has(headline)) {
+                    titles.add(headline);
+                    articles.push({
+                        title: headline,
+                        href: href
+                    });
+                }
             });
         }
-        console.log(`📰 Kenh14 headlines: ${titles.length} titles`);
-        return titles.slice(0, 30);
+
+        // Filter out noise
+        const filtered = articles.filter(item => {
+            const t = item.title;
+            return t && 
+                   !t.includes('onclick') && 
+                   !t.includes('© ') &&
+                   !t.includes('...') &&
+                   !t.toLowerCase().includes('login') &&
+                   !t.toLowerCase().includes('đăng nhập') &&
+                   !t.toLowerCase().includes('subscribe') &&
+                   !t.toLowerCase().includes('copyright') &&
+                   !t.toLowerCase().includes('bình luận') &&
+                   !t.includes('if (typeof') &&
+                   !t.includes('admicro') &&
+                   t.split(' ').length > 2; // At least 3 words
+        });
+
+        console.log(`📰 Kenh14 headlines: ${filtered.length} titles (after lazy load + focused extraction)`);
+        
+        // Return articles with title and href
+        return filtered.slice(0, 150);
     }
 
     // Scrape tiêu đề từ Saostar
@@ -104,13 +206,26 @@ class TrendingService {
         const html = await this.scraperService.safeFetch('https://www.saostar.vn/giai-tri/');
         if (!html) return [];
         const $ = cheerio.load(html);
-        const titles = [];
+        const articles = [];
+        const titles = new Set();
+        
+        // Extract headings with their links
         $('h2, h3, .news-title, .article-title, .title').each((i, el) => {
-            const t = $(el).text().trim();
-            if (t && t.length > 10) titles.push(t);
+            const $el = $(el);
+            const t = $el.text().trim();
+            const href = $el.closest('a').attr('href') || $el.find('a').first().attr('href') || '';
+            
+            if (t && t.length > 10 && !titles.has(t)) {
+                titles.add(t);
+                articles.push({
+                    title: t,
+                    href: href
+                });
+            }
         });
-        console.log(`📰 Saostar headlines: ${titles.length} titles`);
-        return titles.slice(0, 30);
+        
+        console.log(`📰 Saostar headlines: ${articles.length} titles`);
+        return articles.slice(0, 30);
     }
 
     // Dùng Gemini phân tích danh sách tiêu đề và trả về top 7 tên nhân vật
@@ -120,20 +235,20 @@ class TrendingService {
         }
 
         const joined = allHeadlines.slice(0, 80).join('\n');
-        const prompt = `Bạn là chuyên gia phân tích xu hướng mạng xã hội.
-Dưới đây là danh sách các tiêu đề bài báo giải trí và trending searches Việt Nam thu thập trong 48h qua.
+        const prompt = `
+            Dưới đây là danh sách các tiêu đề bài báo giải trí.
 
-Nhiệm vụ: Phân tích và trả về ĐÚNG 7 tên nhân vật (ca sĩ, diễn viên, người nổi tiếng VN hoặc quốc tế) đang được nhắc đến nhiều nhất / đang hot nhất.
+            Nhiệm vụ: Phân tích và trả về ĐÚNG 7 tên nhân vật có tần suất xuất hiện trong các tiêu đề cao nhất.
 
-Quy tắc:
-- Chỉ trả về MỘT JSON array, ví dụ: ["Tên 1", "Tên 2", "Tên 3", "Tên 4", "Tên 5", "Tên 6", "Tên 7"]
-- Đúng 7 phần tử, không nhiều hơn không ít hơn
-- Ưu tiên người có nhiều lần xuất hiện trong các tiêu đề
-- Nếu không đủ 7 người rõ ràng, điền tên nổi tiếng nhất bạn xác định được
-- KHÔNG giải thích, chỉ xuất ra JSON array
+            Quy tắc:
+            - Chỉ trả về MỘT JSON array, ví dụ: ["Tên 1", "Tên 2", "Tên 3", "Tên 4", "Tên 5", "Tên 6", "Tên 7"]
+            - Đúng 7 phần tử, không nhiều hơn không ít hơn
+            - Sắp xếp theo người có số lần xuất hiện nhiều nhất đến thấp nhất từ trên xuống dưới trong top 7
+            - Nếu không đủ 7 người rõ ràng, điền tên nổi tiếng nhất bạn xác định được
+            - KHÔNG giải thích, chỉ xuất ra JSON array
 
-Dữ liệu:
-${joined}`;
+            Dữ liệu:
+            ${joined}`;
 
         try {
             const raw = await this.geminiService.generateSummaryWithRetry(prompt);
@@ -180,13 +295,19 @@ ${joined}`;
             const matched = people.some(p => {
                 if (!p) return false;
                 const nameLower = p.toLowerCase();
+                
+                // Exact match: full name
                 if (titleLower.includes(nameLower)) {
                     return true;
                 }
-                const nameParts = nameLower.split(' ').filter(p => p.length > 0);
-                if (nameParts.length > 1) {
+                
+                // Split name into parts and check if ALL meaningful parts appear (> 2 chars)
+                const nameParts = nameLower.split(' ').filter(p => p.length > 2);
+                if (nameParts.length > 0) {
+                    // Match ONLY if ALL name parts appear (stricter matching)
                     return nameParts.every(part => titleLower.includes(part));
                 }
+                
                 return false;
             });
             if (!matched) return;
@@ -211,34 +332,60 @@ ${joined}`;
         return filtered.slice(0, 20);
     }
 
-    // Lấy ALL bài báo cho mỗi người trong 48 giờ
-    async fetchArticlesForPeople(people) {
-        const sources = [
-            { url: 'https://kenh14.vn/star.chn', name: 'Kenh14' },
-            { url: 'https://www.saostar.vn/giai-tri/', name: 'Saostar' }
-        ];
-
+    // Lấy ALL bài báo cho mỗi người từ extracted headline list
+    async fetchArticlesForPeople(people, extractedHeadlines) {
         const peopleArticles = [];
+        
+        // extractedHeadlines format: {kenh14: [{title, href, source: 'Kenh14'}, ...], saostar: [...]} 
+        const allArticles = [
+            ...(extractedHeadlines.kenh14 || []),
+            ...(extractedHeadlines.saostar || [])
+        ];
 
         for (const person of people) {
             if (!person) continue;
 
             const personArticles = [];
+            const personNameLower = person.toLowerCase();
 
-            for (const src of sources) {
-                const articles = await this.scrapeArticlesFromSource(src.url, src.name, [person]);
-                personArticles.push(...articles);
+            // Find all articles matching this person
+            for (const article of allArticles) {
+                const titleLower = article.title.toLowerCase();
+
+                // Exact match: full name
+                if (titleLower.includes(personNameLower)) {
+                    personArticles.push(article);
+                    continue;
+                }
+                
+                // Split name into parts and check if ALL meaningful parts appear (> 2 chars)
+                const nameParts = personNameLower.split(' ').filter(p => p.length > 2);
+                if (nameParts.length > 0) {
+                    // Match ONLY if ALL name parts appear (stricter matching)
+                    if (nameParts.every(part => titleLower.includes(part))) {
+                        personArticles.push(article);
+                    }
+                }
             }
 
-            personArticles.sort((a, b) => new Date(b.date) - new Date(a.date));
-            const topArticles = personArticles.slice(0, 10);
+            // Remove duplicates and take top 10
+            const uniqueArticles = [];
+            const seenUrls = new Set();
+            for (const article of personArticles) {
+                if (!seenUrls.has(article.href)) {
+                    seenUrls.add(article.href);
+                    uniqueArticles.push(article);
+                }
+            }
+            
+            const topArticles = uniqueArticles.slice(0, 10);
 
             peopleArticles.push({
                 person,
                 articles: topArticles
             });
 
-            console.log(`📄 ${person}: tìm được ${topArticles.length} bài báo`);
+            console.log(`📄 ${person}: tìm được ${topArticles.length} bài báo từ extracted headlines`);
         }
 
         return peopleArticles;
@@ -253,14 +400,18 @@ ${joined}`;
                 this.scrapeSaostarHeadlines()
             ]);
 
-            const allHeadlines = [
-                ...kenh14Headlines,
-                ...saostarHeadlines
+            // Add source name to each article
+            const kenh14WithSource = kenh14Headlines.map(item => ({ ...item, source: 'Kenh14' }));
+            const saostarWithSource = saostarHeadlines.map(item => ({ ...item, source: 'Saostar' }));
+            
+            const allHeadlineTitles = [
+                ...kenh14Headlines.map(item => item.title),
+                ...saostarHeadlines.map(item => item.title)
             ];
 
-            console.log(`📊 Tổng số tiêu đề thu thập được: ${allHeadlines.length}`);
+            console.log(`📊 Tổng số tiêu đề thu thập được: ${allHeadlineTitles.length}`);
 
-            const top7People = await this.analyzeTop7PeopleWithGemini(allHeadlines);
+            const top7People = await this.analyzeTop7PeopleWithGemini(allHeadlineTitles);
             console.log('🌟 Top 7 nhân vật:', top7People);
 
             const peopleWithStats = [];
@@ -282,7 +433,12 @@ ${joined}`;
             }
             console.log('📊 Đã fetch stats cho các nhân vật');
 
-            const peopleArticles = await this.fetchArticlesForPeople(top7People);
+            // Use extracted headlines list instead of scraping sources
+            const extractedHeadlines = {
+                kenh14: kenh14WithSource,
+                saostar: saostarWithSource
+            };
+            const peopleArticles = await this.fetchArticlesForPeople(top7People, extractedHeadlines);
             console.log(`📰 Tìm được articles cho ${peopleArticles.length} nhân vật`);
 
             const people = peopleWithStats.map(person => {
