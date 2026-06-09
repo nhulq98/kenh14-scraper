@@ -176,9 +176,9 @@ class ScraperService {
                 console.log(`✅ Using Chrome from environment variable: ${executablePath}`);
             } else {
                 const possiblePaths = [
-                    '/usr/bin/chromium-browser',  // Render.com/Linux (priority)
-                    '/usr/bin/chromium',           // Linux
-                    '/usr/bin/google-chrome',      // Linux
+                    '/usr/bin/chromium',           // Debian/slim (no -browser suffix)
+                    '/usr/bin/chromium-browser',   // Standard Debian
+                    '/usr/bin/google-chrome',      // Google Chrome
                     '/snap/bin/chromium',          // Snap package
                     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',  // macOS
                     'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',     // Windows

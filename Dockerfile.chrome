@@ -1,0 +1,36 @@
+# Alternative Dockerfile using Google Chrome
+FROM node:18-slim
+
+# Install Google Chrome and dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    wget \
+    gnupg \
+    ca-certificates \
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+    google-chrome-stable \
+    libnss3 \
+    libxss1 \
+    libasound2 \
+    libgtk-3-0 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install --production
+
+COPY . .
+
+EXPOSE 3000
+
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
+
+CMD ["npm", "start"]
