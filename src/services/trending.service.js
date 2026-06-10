@@ -396,7 +396,7 @@ class TrendingService {
     async getHotArticlesWithGemini(allHeadlines) {
         const prompt = `Role: Bạn là 1 người việt nam, chuyên gia hóng biến và đọc tin tức hot, giật gân
 Task: 
-Hãy chọn ra bài báo gây tò mò nhất bạn sẽ đọc dựa trên tiêu đề bài báo, tránh các bài báo có từ khóa ăn gậy từ tiktok
+Hãy chọn ra danh sách bài báo gây tò mò nhất bạn sẽ đọc dựa trên tiêu đề bài báo, tránh các bài báo có từ khóa ăn gậy từ tiktok
 YÊU CẦU KỸ THUẬT BẮT BUỘC:
 - Quy định về tiêu đề cần loại bỏ (nếu thỏa ít nhất 1 điều kiện sẽ bị loại):
 1. Chứa nội dung tin tức thông thường
