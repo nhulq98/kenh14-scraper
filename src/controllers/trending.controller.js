@@ -45,8 +45,8 @@ class TrendingController {
             await trendingService.updateTrendingData();
             const cache = await trendingService.getTrendingCache();
             
-            // Get hot articles (refresh cache)
-            const hotArticlesData = await trendingService.getHotArticles();
+            // Get hot articles with refresh=true to bypass cache
+            const hotArticlesData = await trendingService.getHotArticles(true);
             
             res.json({
                 success: true,

@@ -526,32 +526,45 @@ Trả về JSON array của các bài báo được chọn (chỉ tiêu đề, k
     }
 
     // Lấy danh sách bài báo hot (mới)
-    async getHotArticles() {
+    // @param {boolean} refresh - If true, bypass cache and fetch fresh data
+    async getHotArticles(refresh = false) {
         try {
-            // Check if cache has valid hot articles
-            const cache = await this.getTrendingCache();
-            if (cache.articles && cache.articles.length > 0) {
-                console.log(`✅ Returning cached hot articles (${cache.articles.length} articles)`);
-                return {
-                    articles: cache.articles,
-                    updatedAt: cache.updatedAt,
-                    fromCache: true
-                };
+            // Check if cache has valid hot articles (skip if refresh=true)
+            if (!refresh) {
+                const cache = await this.getTrendingCache();
+                if (cache.articles && cache.articles.length > 0) {
+                    console.log(`✅ Returning cached hot articles (${cache.articles.length} articles)`);
+                    return {
+                        articles: cache.articles,
+                        updatedAt: cache.updatedAt,
+                        fromCache: true
+                    };
+                }
+            } else {
+                console.log('🔄 Refresh mode: fetching fresh hot articles (bypassing cache)...');
             }
 
+            // Get cache for headlines (always use it if available)
+            const cache = await this.getTrendingCache();
+
             // Use headlines from cache if available (just scraped in updateTrendingData)
+            // But fetch fresh if refresh mode is enabled
             let allHeadlineTitles;
-            if (cache.headlines && cache.headlines.allTitles) {
+            let freshHeadlines = null;
+            
+            if (!refresh && cache.headlines && cache.headlines.allTitles) {
                 console.log('📖 Using headlines from cache (no re-scraping needed)');
                 allHeadlineTitles = cache.headlines.allTitles;
             } else {
-                // Fallback: only scrape if headlines not in cache
-                console.log('⏳ Fetching headlines from sources (cache miss)...');
+                // Fetch fresh headlines (either cache miss or refresh mode)
+                const reason = refresh ? 'refresh mode enabled' : 'cache miss';
+                console.log(`⏳ Fetching fresh headlines from sources (${reason})...`);
                 const [kenh14Headlines, saostarHeadlines] = await Promise.all([
                     this.scrapeKenh14Headlines(),
                     this.scrapeSaostarHeadlines()
                 ]);
 
+                freshHeadlines = { kenh14: kenh14Headlines, saostar: saostarHeadlines };
                 allHeadlineTitles = [
                     ...kenh14Headlines.map(item => item.title),
                     ...saostarHeadlines.map(item => item.title)
@@ -567,39 +580,14 @@ Trả về JSON array của các bài báo được chọn (chỉ tiêu đề, k
             // Mapping URLs từ kenh14 và saostar
             let hotArticles = [];
             
-            if (cache.headlines) {
-                // Use headlines from cache
-                const kenh14Headlines = cache.headlines.kenh14 || [];
-                const saostarHeadlines = cache.headlines.saostar || [];
+            // Use fresh headlines if we just fetched them, otherwise use cache
+            const headlinesToUse = freshHeadlines || cache.headlines;
+            
+            if (headlinesToUse) {
+                // Use headlines from fresh or cache
+                const kenh14Headlines = headlinesToUse.kenh14 || [];
+                const saostarHeadlines = headlinesToUse.saostar || [];
                 
-                hotArticles = hotTitles.map(title => {
-                    const kenh14Match = kenh14Headlines.find(item => item.title === title);
-                    if (kenh14Match) {
-                        return {
-                            title: title,
-                            url: kenh14Match.href,
-                            source: 'Kenh14'
-                        };
-                    }
-
-                    const saostarMatch = saostarHeadlines.find(item => item.title === title);
-                    if (saostarMatch) {
-                        return {
-                            title: title,
-                            url: saostarMatch.href,
-                            source: 'Saostar'
-                        };
-                    }
-
-                    return null;
-                }).filter(Boolean);
-            } else {
-                // Fallback if we had to re-scrape
-                const [kenh14Headlines, saostarHeadlines] = await Promise.all([
-                    this.scrapeKenh14Headlines(),
-                    this.scrapeSaostarHeadlines()
-                ]);
-
                 hotArticles = hotTitles.map(title => {
                     const kenh14Match = kenh14Headlines.find(item => item.title === title);
                     if (kenh14Match) {
