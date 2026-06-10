@@ -432,7 +432,7 @@ Trả về JSON array của các bài báo được chọn (chỉ tiêu đề, k
                 }
             }
             
-            return hotArticles.slice(0, 10); // Top 10 hot articles
+            return hotArticles; // Top 10 hot articles
         } catch (err) {
             console.warn('⚠️  Gemini hot articles analysis failed:', err.message);
             return [];
