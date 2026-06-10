@@ -855,6 +855,139 @@ function showTtsStatus(type, message) {
     ttsStatus.innerHTML = message;
 }
 
+// ===== HOT ARTICLES FUNCTIONS =====
+
+// Load hot articles on page load
+async function loadHotArticles() {
+    try {
+        const res = await fetch('/api/trending/hot-articles');
+        const data = await res.json();
+        if (data.success) {
+            renderHotArticles(data.articles || []);
+        } else {
+            showHotArticlesError();
+        }
+    } catch (err) {
+        console.error('Hot articles fetch error:', err);
+        showHotArticlesError();
+    }
+}
+
+async function refreshHotArticles() {
+    const btn = document.getElementById('refreshHotArticlesBtn');
+    if (!btn) return;
+    
+    btn.classList.add('spinning');
+    btn.disabled = true;
+    
+    // Show skeletons
+    renderHotArticlesSkeletons();
+    
+    try {
+        const res = await fetch('/api/trending/hot-articles');
+        const data = await res.json();
+        if (data.success) {
+            renderHotArticles(data.articles || []);
+        } else {
+            showHotArticlesError();
+        }
+    } catch (err) {
+        console.error('Hot articles refresh error:', err);
+        showHotArticlesError();
+    } finally {
+        btn.classList.remove('spinning');
+        btn.disabled = false;
+    }
+}
+
+function renderHotArticlesSkeletons() {
+    const list = document.getElementById('hotArticlesList');
+    if (!list) return;
+    
+    const skeletons = Array(5).fill(0).map(() => 
+        '<li class="skeleton-item"><div class="skeleton" style="flex:1"></div></li>'
+    ).join('');
+    
+    list.innerHTML = skeletons;
+}
+
+function renderHotArticles(articles) {
+    const list = document.getElementById('hotArticlesList');
+    if (!list) return;
+    
+    if (!articles || articles.length === 0) {
+        list.innerHTML = '<li style="padding:12px;color:var(--text-secondary);font-size:0.9em;text-align:center;">Chưa có bài báo hot.</li>';
+        return;
+    }
+    
+    const articlesHtml = articles.map((article, i) => {
+        const title = article.title || '';
+        const url = article.url || '#';
+        const source = article.source || 'Unknown';
+        const displayUrl = url.length > 40 ? url.substring(0, 37) + '...' : url;
+        
+        return `
+            <li class="article-item-hot">
+                <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="article-title-hot" title="Click to open article">${escapeHtml(title)}</a>
+                <div style="display:flex;gap:8px;align-items:center;justify-content:space-between">
+                    <div class="article-source-hot">
+                        <span class="article-source-badge">${escapeHtml(source)}</span>
+                    </div>
+                    <button class="article-copy-url-btn" onclick="copyArticleUrl('${escapeHtml(url)}', event)" title="Copy URL">
+                        📋 Copy URL
+                    </button>
+                </div>
+            </li>
+        `;
+    }).join('');
+    
+    list.innerHTML = articlesHtml;
+}
+
+function showHotArticlesError() {
+    const list = document.getElementById('hotArticlesList');
+    if (!list) return;
+    list.innerHTML = '<li style="padding:12px;color:var(--error);font-size:0.9em;text-align:center;">Lỗi tải bài báo hot. Vui lòng thử lại.</li>';
+}
+
+function copyArticleUrl(url, event) {
+    event && event.stopPropagation();
+    
+    if (!url || url === '#') {
+        alert('URL không hợp lệ');
+        return;
+    }
+    
+    navigator.clipboard.writeText(url).then(() => {
+        const btn = event.target.closest('button');
+        if (btn) {
+            const originalText = btn.textContent;
+            btn.textContent = '✅ Đã copy!';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.classList.remove('copied');
+            }, 1800);
+        }
+    }).catch(err => {
+        console.error('Copy error:', err);
+        alert('Lỗi khi copy URL');
+    });
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
 // Initialize voice options
 renderVoiceOptions('north');
 updateSpeedValue();
@@ -862,6 +995,9 @@ updateButtonStates();
 
 // Load saved settings from localStorage
 loadSettings();
+
+// Load hot articles
+loadHotArticles();
 
 // Cleanup on page unload
 window.addEventListener('beforeunload', () => {

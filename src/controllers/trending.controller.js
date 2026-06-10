@@ -49,6 +49,27 @@ class TrendingController {
             });
         }
     }
+
+    /**
+     * Get hot articles
+     * @param {Object} req - Express request
+     * @param {Object} res - Express response
+     */
+    static async handleGetHotArticles(req, res) {
+        try {
+            const hotArticlesData = await trendingService.getHotArticles();
+            res.json({
+                success: true,
+                ...hotArticlesData
+            });
+        } catch (error) {
+            console.error('Hot articles get error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Lỗi khi lấy danh sách bài báo hot'
+            });
+        }
+    }
 }
 
 module.exports = TrendingController;

@@ -391,6 +391,52 @@ class TrendingService {
         return peopleArticles;
     }
 
+    // Lấy danh sách bài báo hot dựa trên Gemini analysis
+    async getHotArticlesWithGemini(allHeadlines) {
+        const prompt = `Role: Bạn là 1 người việt nam, chuyên gia hóng biến và đọc tin tức hot, giật gân
+Task: 
+Hãy chọn ra bài báo gây tò mò nhất bạn sẽ đọc dựa trên tiêu đề bài báo, tránh các bài báo có từ khóa ăn gậy từ tiktok
+YÊU CẦU KỸ THUẬT BẮT BUỘC:
+- Quy định về tiêu đề cần loại bỏ (nếu thỏa ít nhất 1 điều kiện sẽ bị loại):
+1. Chứa nội dung tin tức thông thường
+2. Chứa các từ khóa nhạy cảm dễ bị đánh gậy vi phạm tiêu chuẩn cộng đồng như: qua đời, ma túy, lừa đảo, ngoại tình, bạo bệnh, tội ác
+
+- Quy định về tiêu đề thỏa các điều bên dưới sẽ được giữ lại:
+1. Nhân vật chính là những ngôi sao lớn, có độ thảo luận và sức nóng cao trên mạng xã hội.
+2. Chứa các từ khóa sau: qua đời, chết, bê bối, ngoại tình, mang thai, bí mật, đời tư, scandal, lên tiếng, phân trần, bị tố, phản ứng, cấp bách, bức xúc, chia tay, ly hôn, tấn công, đáp trả, sự thật, bại lộ, tranh cãi, sốc, đi sai, chỉ trích, xin lỗi, tẩy chay, bí mật, cãi nhau, phong sát, tức giận, lao lý, bị bắt, phủ nhận, thừa nhận, hào môn, đại gia, nan y, bệnh, bắt gặp, trượt tay, bằng chứng, số tiền khủng, vừa xảy ra, lộ, dấu hiệu, gây bão, out trình, xấu, xấu xí, trending, lớn nhất, sự nghiệp, tiết lộ, quyền lực, công khai, vạch mặt, ồn ào, tố, soi, cam thường, mặt mộc, lời thề, toàn cầu, gây sốt, tung tích, khó tin, không thể tin, vang dội, cắt sóng, bị ghét, cô lập, thịnh nộ, ác nữ, ác nam, tình thật, phim giả, đau đầu, áp lực, thế kỷ, xa hoa, cuộc chiến, giá đắt, thác loạn, ăn chơi, nhỏ nhen, cực phẩm, tan nát, chất cấm, kích thích, hủy hoại, kêu gọi, quay đầu, nghẹn lòng, đại náo, làm mưa, làm gió, nghi vấn, biến dạng, căng thẳng, thấy sợ, điên đảo, hot căng, top 1
+Không giải thích gì thêm
+
+Danh sách tiêu đề bài báo:
+${allHeadlines.join('\n')}
+
+Trả về JSON array của các bài báo được chọn (chỉ tiêu đề, không giải thích):`;
+
+        try {
+            const raw = await this.geminiService.generateSummaryWithRetry(prompt);
+            // Tìm các string tiêu đề trong response
+            const lines = raw.split('\n')
+                .map(l => l.trim())
+                .filter(l => l.length > 15 && l.length < 500);
+            
+            // Giữ lại tiêu đề có trong danh sách gốc
+            const hotArticles = [];
+            for (const line of lines) {
+                const matched = allHeadlines.find(h => 
+                    h.toLowerCase().includes(line.toLowerCase().slice(0, 30)) ||
+                    line.toLowerCase().includes(h.toLowerCase().slice(0, 30))
+                );
+                if (matched && !hotArticles.includes(matched)) {
+                    hotArticles.push(matched);
+                }
+            }
+            
+            return hotArticles.slice(0, 10); // Top 10 hot articles
+        } catch (err) {
+            console.warn('⚠️  Gemini hot articles analysis failed:', err.message);
+            return [];
+        }
+    }
+
     // Hàm chính: cập nhật toàn bộ trending data
     async updateTrendingData() {
         console.log('🔄 Bắt đầu cập nhật trending data...');
@@ -469,6 +515,64 @@ class TrendingService {
             return fileCache;
         }
         return this.trendingCache;
+    }
+
+    // Lấy danh sách bài báo hot (mới)
+    async getHotArticles() {
+        try {
+            // Lấy danh sách tiêu đề
+            const [kenh14Headlines, saostarHeadlines] = await Promise.all([
+                this.scrapeKenh14Headlines(),
+                this.scrapeSaostarHeadlines()
+            ]);
+
+            const allHeadlineTitles = [
+                ...kenh14Headlines.map(item => item.title),
+                ...saostarHeadlines.map(item => item.title)
+            ];
+
+            console.log(`📊 Tổng số tiêu đề thu thập được cho hot articles: ${allHeadlineTitles.length}`);
+
+            // Lấy danh sách bài báo hot từ Gemini
+            const hotTitles = await this.getHotArticlesWithGemini(allHeadlineTitles);
+            console.log(`🔥 Tìm được ${hotTitles.length} bài báo hot`);
+
+            // Mapping URLs từ kenh14 và saostar
+            const hotArticles = hotTitles.map(title => {
+                // Tìm trong kenh14
+                const kenh14Match = kenh14Headlines.find(item => item.title === title);
+                if (kenh14Match) {
+                    return {
+                        title: title,
+                        url: kenh14Match.href,
+                        source: 'Kenh14'
+                    };
+                }
+
+                // Tìm trong saostar
+                const saostarMatch = saostarHeadlines.find(item => item.title === title);
+                if (saostarMatch) {
+                    return {
+                        title: title,
+                        url: saostarMatch.href,
+                        source: 'Saostar'
+                    };
+                }
+
+                return null;
+            }).filter(Boolean);
+
+            return {
+                articles: hotArticles,
+                updatedAt: new Date().toISOString()
+            };
+        } catch (err) {
+            console.error('❌ Lỗi lấy hot articles:', err.message);
+            return {
+                articles: [],
+                updatedAt: new Date().toISOString()
+            };
+        }
     }
 }
 

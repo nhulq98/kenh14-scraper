@@ -141,33 +141,34 @@
 
         <!-- TRENDING PANEL -->
         <div class="trending-panel" id="trendingPanel">
-            <!-- Top 5 People -->
-            <div class="trending-section">
-                <div class="trending-header">
-                    <div class="trending-title">🔥 Top 5 Nhân Vật Hot Trend 48h</div>
-                    <div class="trending-meta">
-                        <span id="trendingUpdatedAt">--</span>
-                        <button class="btn-refresh" id="refreshTrendingBtn" onclick="refreshTrending()">
-                            <span class="refresh-icon">↻</span> Refresh
-                        </button>
+            <div class="trending-container">
+                <!-- Top 5 People -->
+                <div class="trending-section">
+                    <div class="trending-header">
+                        <div class="trending-title">🔥 Top 5 Nhân Vật Hot Trend 48h</div>
+                        <div class="trending-meta">
+                            <span id="trendingUpdatedAt">--</span>
+                            <button class="btn-refresh" id="refreshTrendingBtn" onclick="refreshTrending()">
+                                <span class="refresh-icon">↻</span> Refresh
+                            </button>
+                        </div>
                     </div>
-                </div>
-                <ul class="people-list" id="peopleList">
-                    <!-- Skeleton -->
-                    <li class="skeleton-item">
-                        <div class="skeleton-circle"></div>
-                        <div class="skeleton" style="flex:1"></div>
-                    </li>
-                    <li class="skeleton-item">
-                        <div class="skeleton-circle"></div>
-                        <div class="skeleton" style="flex:1"></div>
-                    </li>
-                    <li class="skeleton-item">
-                        <div class="skeleton-circle"></div>
-                        <div class="skeleton" style="flex:1"></div>
-                    </li>
-                    <li class="skeleton-item">
-                        <div class="skeleton-circle"></div>
+                    <ul class="people-list" id="peopleList">
+                        <!-- Skeleton -->
+                        <li class="skeleton-item">
+                            <div class="skeleton-circle"></div>
+                            <div class="skeleton" style="flex:1"></div>
+                        </li>
+                        <li class="skeleton-item">
+                            <div class="skeleton-circle"></div>
+                            <div class="skeleton" style="flex:1"></div>
+                        </li>
+                        <li class="skeleton-item">
+                            <div class="skeleton-circle"></div>
+                            <div class="skeleton" style="flex:1"></div>
+                        </li>
+                        <li class="skeleton-item">
+                            <div class="skeleton-circle"></div>
                         <div class="skeleton" style="flex:1"></div>
                     </li>
                     <li class="skeleton-item">
@@ -175,6 +176,37 @@
                         <div class="skeleton" style="flex:1"></div>
                     </li>
                 </ul>
+                </div>
+
+                <!-- Hot Articles -->
+                <div class="trending-section hot-articles-section">
+                    <div class="trending-header">
+                        <div class="trending-title">📰 Danh sách bài báo thu hút sự chú ý trong 48h</div>
+                        <div class="trending-meta">
+                            <button class="btn-refresh" id="refreshHotArticlesBtn" onclick="refreshHotArticles()">
+                                <span class="refresh-icon">↻</span> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <ul class="articles-list-hot" id="hotArticlesList">
+                        <!-- Skeleton -->
+                        <li class="skeleton-item">
+                            <div class="skeleton" style="flex:1"></div>
+                        </li>
+                        <li class="skeleton-item">
+                            <div class="skeleton" style="flex:1"></div>
+                        </li>
+                        <li class="skeleton-item">
+                            <div class="skeleton" style="flex:1"></div>
+                        </li>
+                        <li class="skeleton-item">
+                            <div class="skeleton" style="flex:1"></div>
+                        </li>
+                        <li class="skeleton-item">
+                            <div class="skeleton" style="flex:1"></div>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
 
