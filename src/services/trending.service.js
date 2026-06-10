@@ -11,6 +11,7 @@ class TrendingService {
     constructor() {
         this.trendingCache = {
             people: [],
+            articles: [],
             updatedAt: null
         };
         // Dependency Injection references (we will import them or they should be static)
@@ -520,6 +521,17 @@ Trả về JSON array của các bài báo được chọn (chỉ tiêu đề, k
     // Lấy danh sách bài báo hot (mới)
     async getHotArticles() {
         try {
+            // Check if cache has valid hot articles
+            const cache = await this.getTrendingCache();
+            if (cache.articles && cache.articles.length > 0) {
+                console.log(`✅ Returning cached hot articles (${cache.articles.length} articles)`);
+                return {
+                    articles: cache.articles,
+                    updatedAt: cache.updatedAt,
+                    fromCache: true
+                };
+            }
+
             // Lấy danh sách tiêu đề
             const [kenh14Headlines, saostarHeadlines] = await Promise.all([
                 this.scrapeKenh14Headlines(),
@@ -562,10 +574,17 @@ Trả về JSON array của các bài báo được chọn (chỉ tiêu đề, k
                 return null;
             }).filter(Boolean);
 
-            return {
+            const result = {
                 articles: hotArticles,
                 updatedAt: new Date().toISOString()
             };
+
+            // Save hot articles to cache
+            this.trendingCache.articles = hotArticles;
+            this.trendingCache.updatedAt = result.updatedAt;
+            await this.saveCacheToFile(this.trendingCache);
+
+            return result;
         } catch (err) {
             console.error('❌ Lỗi lấy hot articles:', err.message);
             return {

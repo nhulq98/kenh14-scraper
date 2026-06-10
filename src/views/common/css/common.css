@@ -1500,7 +1500,7 @@ button {
     display: inline-block;
     padding: 2px 6px;
     border-radius: 4px;
-    background: var(--primary);
+    background: #ff465599;
     color: white;
     font-weight: 600;
     font-size: 0.65em;

@@ -2,7 +2,7 @@ const trendingService = require('../services/trending.service');
 
 class TrendingController {
     /**
-     * Get trending data
+     * Get trending data (people + hot articles)
      * @param {Object} req - Express request
      * @param {Object} res - Express response
      */
@@ -15,9 +15,16 @@ class TrendingController {
             }
 
             const finalCache = await trendingService.getTrendingCache();
+            
+            // Get hot articles (from cache if available)
+            const hotArticlesData = await trendingService.getHotArticles();
+            
             res.json({
                 success: true,
-                ...finalCache
+                people: finalCache.people,
+                articles: hotArticlesData.articles,
+                updatedAt: finalCache.updatedAt,
+                articlesUpdatedAt: hotArticlesData.updatedAt
             });
         } catch (error) {
             console.error('Trending get error:', error);
@@ -37,9 +44,16 @@ class TrendingController {
         try {
             await trendingService.updateTrendingData();
             const cache = await trendingService.getTrendingCache();
+            
+            // Get hot articles (refresh cache)
+            const hotArticlesData = await trendingService.getHotArticles();
+            
             res.json({
                 success: true,
-                ...cache
+                people: cache.people,
+                articles: hotArticlesData.articles,
+                updatedAt: cache.updatedAt,
+                articlesUpdatedAt: hotArticlesData.updatedAt
             });
         } catch (error) {
             console.error('Trending refresh error:', error);

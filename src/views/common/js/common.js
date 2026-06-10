@@ -857,12 +857,67 @@ function showTtsStatus(type, message) {
 
 // ===== HOT ARTICLES FUNCTIONS =====
 
-// Load hot articles on page load
+// localStorage cache key and duration
+const HOT_ARTICLES_CACHE_KEY = 'hot_articles_cache';
+const HOT_ARTICLES_CACHE_DURATION = 24 * 60 * 60 * 1000; // 1 day in milliseconds
+
+// Save hot articles to localStorage with expiration timestamp
+function saveHotArticlesToCache(data) {
+    const cacheData = {
+        articles: data.articles,
+        updatedAt: data.updatedAt,
+        expiresAt: Date.now() + HOT_ARTICLES_CACHE_DURATION
+    };
+    localStorage.setItem(HOT_ARTICLES_CACHE_KEY, JSON.stringify(cacheData));
+    console.log('📦 Lưu hot articles vào cache (expires: ' + new Date(cacheData.expiresAt).toLocaleString('vi-VN') + ')');
+}
+
+// Load hot articles from localStorage if not expired
+function loadHotArticlesFromCache() {
+    try {
+        const cached = localStorage.getItem(HOT_ARTICLES_CACHE_KEY);
+        if (!cached) return null;
+
+        const cacheData = JSON.parse(cached);
+
+        // Check if cache has expired
+        if (Date.now() > cacheData.expiresAt) {
+            console.log('⏰ Hot articles cache hết hạn, cần cập nhật từ server');
+            localStorage.removeItem(HOT_ARTICLES_CACHE_KEY);
+            return null;
+        }
+
+        console.log('✅ Đang dùng hot articles cache từ localStorage');
+        return cacheData;
+    } catch (err) {
+        console.warn('Lỗi đọc hot articles cache:', err);
+        return null;
+    }
+}
+
+// Clear hot articles cache from localStorage
+function clearHotArticlesCache() {
+    localStorage.removeItem(HOT_ARTICLES_CACHE_KEY);
+    console.log('🗑️  Đã xóa hot articles cache');
+}
+
+// Load hot articles on page load - prioritizes localStorage cache
 async function loadHotArticles() {
     try {
+        // Try to load from localStorage first
+        const cachedData = loadHotArticlesFromCache();
+        if (cachedData) {
+            renderHotArticles(cachedData.articles || []);
+            return; // Don't call server if cache is valid
+        }
+
+        // If cache is empty or expired, fetch from server
+        console.log('📡 Hot articles cache rỗng/hết hạn, fetch từ server...');
         const res = await fetch('/api/trending/hot-articles');
         const data = await res.json();
         if (data.success) {
+            // Save to localStorage
+            saveHotArticlesToCache(data);
             renderHotArticles(data.articles || []);
         } else {
             showHotArticlesError();
@@ -887,6 +942,8 @@ async function refreshHotArticles() {
         const res = await fetch('/api/trending/hot-articles');
         const data = await res.json();
         if (data.success) {
+            // Save to localStorage
+            saveHotArticlesToCache(data);
             renderHotArticles(data.articles || []);
         } else {
             showHotArticlesError();
