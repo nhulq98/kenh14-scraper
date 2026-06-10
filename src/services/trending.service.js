@@ -447,7 +447,7 @@ class TrendingService {
                     ...person,
                     articles: articleData ? articleData.articles : []
                 };
-            });
+            }).sort((a, b) => b.articles.length - a.articles.length);
 
             this.trendingCache = {
                 people: people,
