@@ -12,6 +12,7 @@ class TrendingService {
         this.trendingCache = {
             people: [],
             articles: [],
+            headlines: null,  // Store scraped headlines to avoid re-scraping
             updatedAt: null
         };
         // Dependency Injection references (we will import them or they should be static)
@@ -498,6 +499,12 @@ Trả về JSON array của các bài báo được chọn (chỉ tiêu đề, k
 
             this.trendingCache = {
                 people: people,
+                articles: this.trendingCache.articles || [],  // Keep existing articles if any
+                headlines: {  // Store headlines to avoid re-scraping in getHotArticles()
+                    kenh14: kenh14Headlines,
+                    saostar: saostarHeadlines,
+                    allTitles: allHeadlineTitles
+                },
                 updatedAt: new Date().toISOString()
             };
 
@@ -532,16 +539,24 @@ Trả về JSON array của các bài báo được chọn (chỉ tiêu đề, k
                 };
             }
 
-            // Lấy danh sách tiêu đề
-            const [kenh14Headlines, saostarHeadlines] = await Promise.all([
-                this.scrapeKenh14Headlines(),
-                this.scrapeSaostarHeadlines()
-            ]);
+            // Use headlines from cache if available (just scraped in updateTrendingData)
+            let allHeadlineTitles;
+            if (cache.headlines && cache.headlines.allTitles) {
+                console.log('📖 Using headlines from cache (no re-scraping needed)');
+                allHeadlineTitles = cache.headlines.allTitles;
+            } else {
+                // Fallback: only scrape if headlines not in cache
+                console.log('⏳ Fetching headlines from sources (cache miss)...');
+                const [kenh14Headlines, saostarHeadlines] = await Promise.all([
+                    this.scrapeKenh14Headlines(),
+                    this.scrapeSaostarHeadlines()
+                ]);
 
-            const allHeadlineTitles = [
-                ...kenh14Headlines.map(item => item.title),
-                ...saostarHeadlines.map(item => item.title)
-            ];
+                allHeadlineTitles = [
+                    ...kenh14Headlines.map(item => item.title),
+                    ...saostarHeadlines.map(item => item.title)
+                ];
+            }
 
             console.log(`📊 Tổng số tiêu đề thu thập được cho hot articles: ${allHeadlineTitles.length}`);
 
@@ -550,29 +565,63 @@ Trả về JSON array của các bài báo được chọn (chỉ tiêu đề, k
             console.log(`🔥 Tìm được ${hotTitles.length} bài báo hot`);
 
             // Mapping URLs từ kenh14 và saostar
-            const hotArticles = hotTitles.map(title => {
-                // Tìm trong kenh14
-                const kenh14Match = kenh14Headlines.find(item => item.title === title);
-                if (kenh14Match) {
-                    return {
-                        title: title,
-                        url: kenh14Match.href,
-                        source: 'Kenh14'
-                    };
-                }
+            let hotArticles = [];
+            
+            if (cache.headlines) {
+                // Use headlines from cache
+                const kenh14Headlines = cache.headlines.kenh14 || [];
+                const saostarHeadlines = cache.headlines.saostar || [];
+                
+                hotArticles = hotTitles.map(title => {
+                    const kenh14Match = kenh14Headlines.find(item => item.title === title);
+                    if (kenh14Match) {
+                        return {
+                            title: title,
+                            url: kenh14Match.href,
+                            source: 'Kenh14'
+                        };
+                    }
 
-                // Tìm trong saostar
-                const saostarMatch = saostarHeadlines.find(item => item.title === title);
-                if (saostarMatch) {
-                    return {
-                        title: title,
-                        url: saostarMatch.href,
-                        source: 'Saostar'
-                    };
-                }
+                    const saostarMatch = saostarHeadlines.find(item => item.title === title);
+                    if (saostarMatch) {
+                        return {
+                            title: title,
+                            url: saostarMatch.href,
+                            source: 'Saostar'
+                        };
+                    }
 
-                return null;
-            }).filter(Boolean);
+                    return null;
+                }).filter(Boolean);
+            } else {
+                // Fallback if we had to re-scrape
+                const [kenh14Headlines, saostarHeadlines] = await Promise.all([
+                    this.scrapeKenh14Headlines(),
+                    this.scrapeSaostarHeadlines()
+                ]);
+
+                hotArticles = hotTitles.map(title => {
+                    const kenh14Match = kenh14Headlines.find(item => item.title === title);
+                    if (kenh14Match) {
+                        return {
+                            title: title,
+                            url: kenh14Match.href,
+                            source: 'Kenh14'
+                        };
+                    }
+
+                    const saostarMatch = saostarHeadlines.find(item => item.title === title);
+                    if (saostarMatch) {
+                        return {
+                            title: title,
+                            url: saostarMatch.href,
+                            source: 'Saostar'
+                        };
+                    }
+
+                    return null;
+                }).filter(Boolean);
+            }
 
             const result = {
                 articles: hotArticles,
