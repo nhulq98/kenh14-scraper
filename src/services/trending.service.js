@@ -19,6 +19,10 @@ class TrendingService {
         this.scraperService = require('./scraper.service');
         this.geminiService = require('./gemini.service');
         this.statsService = require('./stats.service');
+        
+        // Lock mechanism to prevent concurrent updates
+        this.isUpdating = false;
+        this.updatePromise = null;
     }
 
     // Tạo thư mục cache nếu chưa tồn tại
@@ -441,6 +445,27 @@ Trả về JSON array của các bài báo được chọn (chỉ tiêu đề, k
 
     // Hàm chính: cập nhật toàn bộ trending data
     async updateTrendingData() {
+        // Prevent concurrent updates - if update is already in progress, wait for it
+        if (this.isUpdating) {
+            console.log('⏳ Update đang chạy, đợi kết quả...');
+            return this.updatePromise;
+        }
+
+        // Mark as updating and create a promise for other requests to wait on
+        this.isUpdating = true;
+        this.updatePromise = this._performTrendingUpdate();
+        
+        try {
+            await this.updatePromise;
+        } finally {
+            // Reset the lock after update completes
+            this.isUpdating = false;
+            this.updatePromise = null;
+        }
+    }
+
+    // Helper method: Thực hiện cập nhật trending data
+    async _performTrendingUpdate() {
         console.log('🔄 Bắt đầu cập nhật trending data...');
         try {
             const [kenh14Headlines, saostarHeadlines] = await Promise.all([

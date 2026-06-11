@@ -8,12 +8,23 @@ class TrendingController {
      */
     static async handleGetTrending(req, res) {
         try {
-            // Nếu cache trống thì fetch ngay
+            // Get cache without triggering unnecessary updates
             const cache = await trendingService.getTrendingCache();
-            if (!cache.updatedAt) {
-                await trendingService.updateTrendingData();
+            
+            // If cache exists and was updated, return it immediately
+            if (cache.updatedAt) {
+                return res.json({
+                    success: true,
+                    people: cache.people,
+                    hotArticles: cache.hotArticles || [],
+                    updatedAt: cache.updatedAt
+                });
             }
-
+            
+            // Cache is empty, trigger update (with lock protection)
+            console.log('💾 Cache vides, đang cập nhật dữ liệu...');
+            await trendingService.updateTrendingData();
+            
             const finalCache = await trendingService.getTrendingCache();
             
             res.json({
