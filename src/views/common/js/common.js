@@ -911,14 +911,17 @@ async function loadHotArticles() {
             return; // Don't call server if cache is valid
         }
 
-        // If cache is empty or expired, fetch from server
+        // If cache is empty or expired, fetch from main trending endpoint
         console.log('📡 Hot articles cache rỗng/hết hạn, fetch từ server...');
-        const res = await fetch('/api/trending/hot-articles');
+        const res = await fetch('/api/trending');
         const data = await res.json();
-        if (data.success) {
+        if (data.success && data.hotArticles) {
             // Save to localStorage
-            saveHotArticlesToCache(data);
-            renderHotArticles(data.articles || []);
+            saveHotArticlesToCache({
+                articles: data.hotArticles,
+                updatedAt: data.updatedAt
+            });
+            renderHotArticles(data.hotArticles || []);
         } else {
             showHotArticlesError();
         }
@@ -939,12 +942,16 @@ async function refreshHotArticles() {
     renderHotArticlesSkeletons();
     
     try {
-        const res = await fetch('/api/trending/hot-articles');
+        // Refresh from main trending endpoint
+        const res = await fetch('/api/trending/refresh', { method: 'POST' });
         const data = await res.json();
-        if (data.success) {
+        if (data.success && data.hotArticles) {
             // Save to localStorage
-            saveHotArticlesToCache(data);
-            renderHotArticles(data.articles || []);
+            saveHotArticlesToCache({
+                articles: data.hotArticles,
+                updatedAt: data.updatedAt
+            });
+            renderHotArticles(data.hotArticles || []);
         } else {
             showHotArticlesError();
         }

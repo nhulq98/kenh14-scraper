@@ -160,7 +160,6 @@ app.post('/api/summarize', GeminiController.handleSummarize);
 
 app.get('/api/trending', TrendingController.handleGetTrending);
 app.post('/api/trending/refresh', TrendingController.handleRefreshTrending);
-app.get('/api/trending/hot-articles', TrendingController.handleGetHotArticles);
 
 // ============================================================
 // SCHEDULER

@@ -16,15 +16,11 @@ class TrendingController {
 
             const finalCache = await trendingService.getTrendingCache();
             
-            // Get hot articles (from cache if available)
-            const hotArticlesData = await trendingService.getHotArticles();
-            
             res.json({
                 success: true,
                 people: finalCache.people,
-                articles: hotArticlesData.articles,
-                updatedAt: finalCache.updatedAt,
-                articlesUpdatedAt: hotArticlesData.updatedAt
+                hotArticles: finalCache.hotArticles || [],
+                updatedAt: finalCache.updatedAt
             });
         } catch (error) {
             console.error('Trending get error:', error);
@@ -45,15 +41,11 @@ class TrendingController {
             await trendingService.updateTrendingData();
             const cache = await trendingService.getTrendingCache();
             
-            // Get hot articles with refresh=true to bypass cache
-            const hotArticlesData = await trendingService.getHotArticles(true);
-            
             res.json({
                 success: true,
                 people: cache.people,
-                articles: hotArticlesData.articles,
-                updatedAt: cache.updatedAt,
-                articlesUpdatedAt: hotArticlesData.updatedAt
+                hotArticles: cache.hotArticles || [],
+                updatedAt: cache.updatedAt
             });
         } catch (error) {
             console.error('Trending refresh error:', error);
@@ -64,26 +56,6 @@ class TrendingController {
         }
     }
 
-    /**
-     * Get hot articles
-     * @param {Object} req - Express request
-     * @param {Object} res - Express response
-     */
-    static async handleGetHotArticles(req, res) {
-        try {
-            const hotArticlesData = await trendingService.getHotArticles();
-            res.json({
-                success: true,
-                ...hotArticlesData
-            });
-        } catch (error) {
-            console.error('Hot articles get error:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Lỗi khi lấy danh sách bài báo hot'
-            });
-        }
-    }
 }
 
 module.exports = TrendingController;

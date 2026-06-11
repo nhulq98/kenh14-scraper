@@ -11,7 +11,7 @@ class TrendingService {
     constructor() {
         this.trendingCache = {
             people: [],
-            articles: [],
+            hotArticles: [],  // Hot articles list (consolidated from getHotArticles)
             headlines: null,  // Store scraped headlines to avoid re-scraping
             updatedAt: null
         };
@@ -497,9 +497,37 @@ Trả về JSON array của các bài báo được chọn (chỉ tiêu đề, k
                 };
             }).sort((a, b) => b.articles.length - a.articles.length);
 
+            // Extract hot articles from headlines
+            const hotTitles = await this.getHotArticlesWithGemini(allHeadlineTitles);
+            console.log(`🔥 Tìm được ${hotTitles.length} bài báo hot`);
+
+            // Map hot titles to include URLs and source
+            let hotArticles = [];
+            hotArticles = hotTitles.map(title => {
+                const kenh14Match = kenh14Headlines.find(item => item.title === title);
+                if (kenh14Match) {
+                    return {
+                        title: title,
+                        url: kenh14Match.href,
+                        source: 'Kenh14'
+                    };
+                }
+
+                const saostarMatch = saostarHeadlines.find(item => item.title === title);
+                if (saostarMatch) {
+                    return {
+                        title: title,
+                        url: saostarMatch.href,
+                        source: 'Saostar'
+                    };
+                }
+
+                return null;
+            }).filter(Boolean);
+
             this.trendingCache = {
                 people: people,
-                articles: this.trendingCache.articles || [],  // Keep existing articles if any
+                hotArticles: hotArticles,  // Store extracted hot articles
                 headlines: {  // Store headlines to avoid re-scraping in getHotArticles()
                     kenh14: kenh14Headlines,
                     saostar: saostarHeadlines,
@@ -526,103 +554,34 @@ Trả về JSON array của các bài báo được chọn (chỉ tiêu đề, k
     }
 
     // Lấy danh sách bài báo hot (mới)
-    // @param {boolean} refresh - If true, bypass cache and fetch fresh data
+    // @param {boolean} refresh - If true, bypass cache and refresh from updateTrendingData
     async getHotArticles(refresh = false) {
         try {
-            // Check if cache has valid hot articles (skip if refresh=true)
-            if (!refresh) {
-                const cache = await this.getTrendingCache();
-                if (cache.articles && cache.articles.length > 0) {
-                    console.log(`✅ Returning cached hot articles (${cache.articles.length} articles)`);
-                    return {
-                        articles: cache.articles,
-                        updatedAt: cache.updatedAt,
-                        fromCache: true
-                    };
-                }
-            } else {
-                console.log('🔄 Refresh mode: fetching fresh hot articles (bypassing cache)...');
+            // If refresh is enabled, call updateTrendingData to get fresh data
+            if (refresh) {
+                console.log('🔄 Refresh mode: fetching fresh trending data...');
+                await this.updateTrendingData();
             }
 
-            // Get cache for headlines (always use it if available)
+            // Get cache (either fresh from updateTrendingData or from file)
             const cache = await this.getTrendingCache();
 
-            // Use headlines from cache if available (just scraped in updateTrendingData)
-            // But fetch fresh if refresh mode is enabled
-            let allHeadlineTitles;
-            let freshHeadlines = null;
-            
-            if (!refresh && cache.headlines && cache.headlines.allTitles) {
-                console.log('📖 Using headlines from cache (no re-scraping needed)');
-                allHeadlineTitles = cache.headlines.allTitles;
-            } else {
-                // Fetch fresh headlines (either cache miss or refresh mode)
-                const reason = refresh ? 'refresh mode enabled' : 'cache miss';
-                console.log(`⏳ Fetching fresh headlines from sources (${reason})...`);
-                const [kenh14Headlines, saostarHeadlines] = await Promise.all([
-                    this.scrapeKenh14Headlines(),
-                    this.scrapeSaostarHeadlines()
-                ]);
-
-                freshHeadlines = { kenh14: kenh14Headlines, saostar: saostarHeadlines };
-                allHeadlineTitles = [
-                    ...kenh14Headlines.map(item => item.title),
-                    ...saostarHeadlines.map(item => item.title)
-                ];
+            // Return cached hot articles
+            if (cache.hotArticles && cache.hotArticles.length > 0) {
+                console.log(`✅ Returning hot articles (${cache.hotArticles.length} articles)`);
+                return {
+                    articles: cache.hotArticles,
+                    updatedAt: cache.updatedAt,
+                    fromCache: true
+                };
             }
 
-            console.log(`📊 Tổng số tiêu đề thu thập được cho hot articles: ${allHeadlineTitles.length}`);
-
-            // Lấy danh sách bài báo hot từ Gemini
-            const hotTitles = [];
-            // const hotTitles = await this.getHotArticlesWithGemini(allHeadlineTitles);
-            console.log(`🔥 Tìm được ${hotTitles.length} bài báo hot`);
-
-            // Mapping URLs từ kenh14 và saostar
-            let hotArticles = [];
-            
-            // Use fresh headlines if we just fetched them, otherwise use cache
-            const headlinesToUse = freshHeadlines || cache.headlines;
-            
-            if (headlinesToUse) {
-                // Use headlines from fresh or cache
-                const kenh14Headlines = headlinesToUse.kenh14 || [];
-                const saostarHeadlines = headlinesToUse.saostar || [];
-                
-                hotArticles = hotTitles.map(title => {
-                    const kenh14Match = kenh14Headlines.find(item => item.title === title);
-                    if (kenh14Match) {
-                        return {
-                            title: title,
-                            url: kenh14Match.href,
-                            source: 'Kenh14'
-                        };
-                    }
-
-                    const saostarMatch = saostarHeadlines.find(item => item.title === title);
-                    if (saostarMatch) {
-                        return {
-                            title: title,
-                            url: saostarMatch.href,
-                            source: 'Saostar'
-                        };
-                    }
-
-                    return null;
-                }).filter(Boolean);
-            }
-
-            const result = {
-                articles: hotArticles,
-                updatedAt: new Date().toISOString()
+            // If no hot articles in cache, return empty
+            console.log('⚠️  No hot articles in cache');
+            return {
+                articles: [],
+                updatedAt: cache.updatedAt || new Date().toISOString()
             };
-
-            // Save hot articles to cache
-            this.trendingCache.articles = hotArticles;
-            this.trendingCache.updatedAt = result.updatedAt;
-            await this.saveCacheToFile(this.trendingCache);
-
-            return result;
         } catch (err) {
             console.error('❌ Lỗi lấy hot articles:', err.message);
             return {
