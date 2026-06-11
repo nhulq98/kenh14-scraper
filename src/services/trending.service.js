@@ -574,7 +574,7 @@ Trả về JSON array của các bài báo được chọn (chỉ tiêu đề, k
             console.log(`📊 Tổng số tiêu đề thu thập được cho hot articles: ${allHeadlineTitles.length}`);
 
             // Lấy danh sách bài báo hot từ Gemini
-            const hotTitles;
+            const hotTitles = [];
             // const hotTitles = await this.getHotArticlesWithGemini(allHeadlineTitles);
             console.log(`🔥 Tìm được ${hotTitles.length} bài báo hot`);
 
