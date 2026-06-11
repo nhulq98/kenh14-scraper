@@ -219,10 +219,12 @@ class TrendingService {
             console.warn('⚠️  Puppeteer fetch failed, fallback to safeFetch');
             const fallbackHtml = await this.scraperService.safeFetch('https://kenh14.vn/star.chn');
             if (!fallbackHtml) return [];
-            return this._extractHeadlinesFromHtml(fallbackHtml);
+            const fallbackHeadlines = this._extractHeadlinesFromHtml(fallbackHtml);
+            return await this._filterArticlesWithin48h(fallbackHeadlines, 'https://kenh14.vn');
         }
 
-        return this._extractHeadlinesFromHtml(html);
+        const headlines = this._extractHeadlinesFromHtml(html);
+        return await this._filterArticlesWithin48h(headlines, 'https://kenh14.vn');
     }
 
     // Helper: Extract headlines từ HTML - FOCUSED extraction (now returns {title, href})
@@ -322,6 +324,30 @@ class TrendingService {
         return filtered.slice(0, 150);
     }
 
+    async _filterArticlesWithin48h(articles, baseUrl) {
+        const now = Date.now();
+        const limit48h = 48 * 60 * 60 * 1000;
+        const recent = [];
+
+        for (const item of articles) {
+            if (!item || !item.href) continue;
+            let articleUrl = item.href;
+            try {
+                articleUrl = new URL(articleUrl, baseUrl).toString();
+            } catch (_) {
+                continue;
+            }
+
+            const articleDate = await this.scraperService.extractArticleDate(articleUrl);
+            if (articleDate && (now - articleDate) <= limit48h) {
+                recent.push({ ...item, href: articleUrl });
+            }
+        }
+
+        console.log(`🕒 Filtered to ${recent.length} articles within 48 hours from ${baseUrl}`);
+        return recent;
+    }
+
     // Scrape tiêu đề từ Saostar
     async scrapeSaostarHeadlines() {
         const html = await this.scraperService.safeFetch('https://www.saostar.vn/giai-tri/');
@@ -346,7 +372,8 @@ class TrendingService {
         });
         
         console.log(`📰 Saostar headlines: ${articles.length} titles`);
-        return articles.slice(0, 30);
+        const recentHeadlines = await this._filterArticlesWithin48h(articles, 'https://www.saostar.vn');
+        return recentHeadlines.slice(0, 30);
     }
 
     // Dùng Gemini phân tích danh sách tiêu đề và trả về top 7 tên nhân vật
