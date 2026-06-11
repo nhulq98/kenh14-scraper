@@ -7,6 +7,121 @@ const CACHE_DIR = path.join(__dirname, '../../cache');
 const CACHE_FILE = path.join(CACHE_DIR, 'trending.cache.json');
 const CACHE_EXPIRE_TIME = 24 * 60 * 60 * 1000; // 1 day in milliseconds
 
+const BLACKLIST_KEYWORDS = [
+    // === ĐÃ CÓ ===
+    'ma túy', 'ma tuý', 'lừa đảo', 'bạo bệnh', 'tội ác',
+
+    // === BỔ SUNG TỪ TIKTOK BAN LIST ===
+
+    // Chất cấm / vũ khí
+    'chất kích thích', 'chất cấm', 'cần sa', 'heroin', 'coke',
+    'súng', 'vũ khí', 'đạn',
+
+    // Bạo lực / tự hại
+    'tự tử', 'tự vẫn', 'tự sát', 'quyên sinh',
+    'hiếp dâm', 'xâm hại tình dục',
+    'giết người', 'thảm sát',
+    'tra tấn', 'hành hạ',
+
+    // Nội dung 18+ / khiêu dâm
+    'khiêu dâm', 'sex tape', 'lộ hàng', 'nội dung người lớn',
+
+    // Cờ bạc
+    'cờ bạc', 'cá độ', 'xổ số', 'sòng bạc', 'casino',
+
+    // Phân biệt / kích động
+    'phân biệt chủng tộc', 'kỳ thị',
+    'khủng bố', 'kích động bạo lực',
+];
+
+const WHITELIST_KEYWORDS = [
+    // quan hệ / tình cảm drama
+    'chia tay', 'ly hôn', 'ngoại tình', 'tiểu tam', 'tranh sủng',
+    'hẹn hò', 'đời tư', 'tình thật', 'phim giả', 'lời thề',
+    // scandal / bê bối
+    'bê bối', 'scandal', 'bị tố', 'phân trần', 'lên tiếng',
+    'đáp trả', 'phủ nhận', 'thừa nhận', 'xin lỗi', 'tẩy chay',
+    'vạch mặt', 'chỉ trích', 'tranh cãi', 'ồn ào', 'sốc',
+    'phong sát', 'cắt sóng', 'bại lộ',
+    // tiết lộ / lộ diện
+    'lộ', 'tiết lộ', 'bắt gặp', 'bằng chứng', 'dấu hiệu',
+    'nghi vấn', 'tung tích', 'soi', 'cam thường', 'mặt mộc',
+    // drama gia đình / tài sản
+    'đại gia', 'hào môn', 'tài phiệt', 'thừa kế', 'tranh giành',
+    'biến mất', 'xé toạc', 'đối đầu', 'hầu tòa', 'ra tòa',
+    'lao lý', 'bị bắt',
+    // sức khỏe / sinh con
+    'mang thai', 'nan y', 'bệnh hiểm', 'phẫu thuật',
+    // chỉ trích / drama mạng
+    'gán mác', 'khoe khoang', 'xin bỏ', 'bỏ họ',
+    'tức giận', 'thịnh nộ', 'bức xúc', 'căng thẳng',
+    // misc drama
+    'bí mật', 'gây bão', 'cuộc chiến', 'tan nát', 'sự thật',
+    'công khai', 'tố', // giữ nhưng sẽ dùng exclusion rule bên dưới
+    'bóc phốt', 'dính phốt', 'phốt',
+    'cắm sừng', 'lùm xùm', 'thị phi',
+    'ngoài luồng', 'con ngoài giá thú',
+    'khởi kiện', 'kiện ngược', 'vành móng ngựa',
+    'twist', 'đăng đàn', 'unfollow',
+    'úp mở', 'ẩn ý', 'quay lưng',
+    'sụp đổ', 'mất trắng', 'tủi nhục',
+    'biệt phủ', 'biệt thự', 'cơ ngơi',
+    'từng phải', 'lột xác',
+    'lọt top', 'lọt danh sách',
+];
+
+// Các pattern bị loại dù có keyword whitelist
+const FALSE_POSITIVE_PATTERNS = [
+    /tố cáo/,
+    /gây sốt.*(trang phục|visual|ảnh|bộ ảnh|hình ảnh)/,
+    /gây sốt.*(phim|mv|ca khúc|nhạc|bài hát|ost)/,
+    /gây sốt.*(màn trình diễn|biểu diễn|sân khấu|concert|fan meeting)/,
+    /gây sốt.*(sân bay|street style|outfit|look)/,
+    /gây sốt.*(body|vóc dáng|thân hình|chiều cao)/,
+    /(đăng quang|đoạt giải|nhận giải|giành giải).*(hoa hậu|á hậu|giải thưởng)/,
+    /tổ chức (fan meeting|concert|showcase|event)/,
+    /ra mắt (mv|ca khúc|album|phim|trailer)/,
+    /tham dự (sự kiện|thảm đỏ|lễ trao giải)/,
+    /lịch chiếu|khởi chiếu|công chiếu/,
+    /sĩ tử|tốt nghiệp thpt|kỳ thi/,
+    /world cup|bóng đá|tuyển quốc gia/,
+    /đỗ tiến sĩ|bảo vệ luận văn/,
+    /hôn nhân (viên mãn|hạnh phúc|bình yên)/,
+    /đi du lịch.*(cùng gia đình|cùng vợ con|cùng bạn bè)/,
+    /chia sẻ bí quyết (giảm cân|làm đẹp|giữ dáng)/,
+    ];
+
+const KEYWORD_WEIGHTS = {
+    // Tier 1 — drama nặng (5đ)
+    'bóc phốt':     5, 'cắm sừng':    5, 'ngoại tình':  5, 'tiểu tam':    5,
+    'bê bối':       5, 'scandal':     5, 'lùm xùm':     5, 'bị tố':       5,
+    'cắt sóng':     5, 'phong sát':   5, 'lao lý':      5, 'bị bắt':      5,
+    'ly hôn':       5, 'chia tay':    5, 'dính phốt':   5, 'phốt':        5,
+    'cắm sừng':     5, 'ngoài luồng': 5, 'con ngoài giá thú': 5,
+    'khởi kiện':    5, 'kiện ngược':  5, 'vành móng ngựa': 5,
+    'sụp đổ':       5, 'mất trắng':   5,
+
+    // Tier 2 — drama trung bình (3đ)
+    'lộ':           3, 'tiết lộ':     3, 'bắt gặp':     3, 'bằng chứng':  3,
+    'lên tiếng':    3, 'phủ nhận':    3, 'thừa nhận':   3, 'xin lỗi':     3,
+    'tranh cãi':    3, 'ồn ào':       3, 'sốc':         3, 'gây bão':     3,
+    'đại gia':      3, 'tài phiệt':   3, 'hào môn':     3, 'thừa kế':     3,
+    'tranh giành':  3, 'biến mất':    3, 'xé toạc':     3, 'đối đầu':     3,
+    'hầu tòa':      3, 'ra tòa':      3, 'tủi nhục':    3, 'thị phi':     3,
+    'bí mật':       3, 'nghi vấn':    3, 'tung tích':   3, 'vạch mặt':    3,
+    'chỉ trích':    3, 'tẩy chay':    3, 'đáp trả':     3, 'phân trần':   3,
+    'bùng binh':    3, 'twist':       3, 'đăng đàn':    3, 'quay lưng':   3,
+    'gán mác':      3, 'khoe khoang': 3, 'xin bỏ':      3, 'bỏ họ':       3,
+    'biệt phủ':     3, 'biệt thự':    3, 'từng phải':   3, 'lọt top':     3,
+    'mang thai':    3, 'dấu hiệu':    3, 'bầu':         3,
+
+    // Tier 3 — signal yếu (1đ)
+    'công khai':    1, 'lộ diện':     1, 'soi':         1, 'cam thường':  1,
+    'gây sốt':      1, 'trending':    1, 'phản ứng':    1, 'lên tiếng':   1,
+    'tố':           1, 'unfollow':    1, 'úp mở':       1, 'ẩn ý':        1,
+    'động thái':    1, 'căng thẳng':  1, 'cuộc chiến':  1,
+    };
+
 class TrendingService {
     constructor() {
         this.trendingCache = {
@@ -398,49 +513,18 @@ class TrendingService {
     }
 
     // Lấy danh sách bài báo hot dựa trên Gemini analysis
-    async getHotArticlesWithGemini(allHeadlines) {
-        const prompt = `Role: Bạn là 1 người việt nam, chuyên gia hóng biến và đọc tin tức hot, giật gân
-Task: 
-Hãy chọn ra danh sách bài báo gây tò mò nhất bạn sẽ đọc dựa trên tiêu đề bài báo, tránh các bài báo có từ khóa ăn gậy từ tiktok
-YÊU CẦU KỸ THUẬT BẮT BUỘC:
-- Quy định về tiêu đề cần loại bỏ (nếu thỏa ít nhất 1 điều kiện sẽ bị loại):
-1. Chứa nội dung tin tức thông thường
-2. Chứa các từ khóa nhạy cảm dễ bị đánh gậy vi phạm tiêu chuẩn cộng đồng như: qua đời, ma túy, lừa đảo, ngoại tình, bạo bệnh, tội ác
+    async getHotArticlesWithKeyWord(allHeadlines) {
+        
 
-- Quy định về tiêu đề thỏa các điều bên dưới sẽ được giữ lại:
-1. Nhân vật chính là những ngôi sao lớn, có độ thảo luận và sức nóng cao trên mạng xã hội.
-2. Chứa các từ khóa sau: qua đời, chết, bê bối, ngoại tình, mang thai, bí mật, đời tư, scandal, lên tiếng, phân trần, bị tố, phản ứng, cấp bách, bức xúc, chia tay, ly hôn, tấn công, đáp trả, sự thật, bại lộ, tranh cãi, sốc, đi sai, chỉ trích, xin lỗi, tẩy chay, bí mật, cãi nhau, phong sát, tức giận, lao lý, bị bắt, phủ nhận, thừa nhận, hào môn, đại gia, nan y, bệnh, bắt gặp, trượt tay, bằng chứng, số tiền khủng, vừa xảy ra, lộ, dấu hiệu, gây bão, out trình, xấu, xấu xí, trending, lớn nhất, sự nghiệp, tiết lộ, quyền lực, công khai, vạch mặt, ồn ào, tố, soi, cam thường, mặt mộc, lời thề, toàn cầu, gây sốt, tung tích, khó tin, không thể tin, vang dội, cắt sóng, bị ghét, cô lập, thịnh nộ, ác nữ, ác nam, tình thật, phim giả, đau đầu, áp lực, thế kỷ, xa hoa, cuộc chiến, giá đắt, thác loạn, ăn chơi, nhỏ nhen, cực phẩm, tan nát, chất cấm, kích thích, hủy hoại, kêu gọi, quay đầu, nghẹn lòng, đại náo, làm mưa, làm gió, nghi vấn, biến dạng, căng thẳng, thấy sợ, điên đảo, hot căng, top 1
-Không giải thích gì thêm
+        const headlines = allHeadlines;
 
-Danh sách tiêu đề bài báo:
-${allHeadlines.join('\n')}
-
-Trả về JSON array của các bài báo được chọn (chỉ tiêu đề, không giải thích):`;
-
-        try {
-            const raw = await this.geminiService.generateSummaryWithRetry(prompt);
-            // Tìm các string tiêu đề trong response
-            const lines = raw.split('\n')
-                .map(l => l.trim())
-                .filter(l => l.length > 15 && l.length < 500);
-            
-            // Giữ lại tiêu đề có trong danh sách gốc
-            const hotArticles = [];
-            for (const line of lines) {
-                const matched = allHeadlines.find(h => 
-                    h.toLowerCase().includes(line.toLowerCase().slice(0, 30)) ||
-                    line.toLowerCase().includes(h.toLowerCase().slice(0, 30))
-                );
-                if (matched && !hotArticles.includes(matched)) {
-                    hotArticles.push(matched);
-                }
-            }
-            
-            return hotArticles; // Top 10 hot articles
-        } catch (err) {
-            console.warn('⚠️  Gemini hot articles analysis failed:', err.message);
-            return [];
-        }
+        const norm = s => s.toLowerCase();
+        return headlines.filter(title => {
+            const t = norm(title);
+            if (BLACKLIST_KEYWORDS.some(kw => t.includes(kw))) return false;
+            if (FALSE_POSITIVE_PATTERNS.some(re => re.test(t))) return false;
+            return WHITELIST_KEYWORDS.some(kw => t.includes(kw));
+        });
     }
 
     // Hàm chính: cập nhật toàn bộ trending data
@@ -462,6 +546,29 @@ Trả về JSON array của các bài báo được chọn (chỉ tiêu đề, k
             this.isUpdating = false;
             this.updatePromise = null;
         }
+    }
+
+    filterHotArticles(headlines) {
+        const norm = s => s.toLowerCase();
+        return headlines.filter(title => {
+            const t = norm(title);
+            if (BLACKLIST_KEYWORDS.some(kw => t.includes(kw))) return false;
+            if (FALSE_POSITIVE_PATTERNS.some(re => re.test(t))) return false;
+            return Object.keys(KEYWORD_WEIGHTS).some(kw => t.includes(kw));
+        });
+    }
+
+    scoreTitle(title) {
+        const t = title.toLowerCase();
+        return Object.entries(KEYWORD_WEIGHTS)
+            .reduce((score, [kw, weight]) => t.includes(kw) ? score + weight : score, 0);
+    }
+
+    getHotArticlesSorted(headlines) {
+        return this.filterHotArticles(headlines)
+            .map(title => ({ title, score: this.scoreTitle(title) }))
+            .sort((a, b) => b.score - a.score)
+            .map(({ title, score }) => ({ title, score })); // giữ score để debug
     }
 
     // Helper method: Thực hiện cập nhật trending data
@@ -523,25 +630,25 @@ Trả về JSON array của các bài báo được chọn (chỉ tiêu đề, k
             }).sort((a, b) => b.articles.length - a.articles.length);
 
             // Extract hot articles from headlines
-            const hotTitles = await this.getHotArticlesWithGemini(allHeadlineTitles);
+            const hotTitles = this.getHotArticlesSorted(allHeadlineTitles);
             console.log(`🔥 Tìm được ${hotTitles.length} bài báo hot`);
 
             // Map hot titles to include URLs and source
             let hotArticles = [];
             hotArticles = hotTitles.map(title => {
-                const kenh14Match = kenh14Headlines.find(item => item.title === title);
+                const kenh14Match = kenh14Headlines.find(item => item.title === title.title);
                 if (kenh14Match) {
                     return {
-                        title: title,
+                        title: title.title,
                         url: kenh14Match.href,
                         source: 'Kenh14'
                     };
                 }
 
-                const saostarMatch = saostarHeadlines.find(item => item.title === title);
+                const saostarMatch = saostarHeadlines.find(item => item.title === title.title);
                 if (saostarMatch) {
                     return {
-                        title: title,
+                        title: title.title,
                         url: saostarMatch.href,
                         source: 'Saostar'
                     };
