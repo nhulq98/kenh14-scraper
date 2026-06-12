@@ -68,6 +68,9 @@ const WHITELIST_KEYWORDS = [
     'biệt phủ', 'biệt thự', 'cơ ngơi',
     'từng phải', 'lột xác',
     'lọt top', 'lọt danh sách',
+
+    //others
+    'phản cảm', 'rà soát', 'đổi đời', 'cái tát', 'lấn lướt', 'chào thua',
 ];
 
 // Các pattern bị loại dù có keyword whitelist
@@ -113,13 +116,15 @@ const KEYWORD_WEIGHTS = {
     'bùng binh':    3, 'twist':       3, 'đăng đàn':    3, 'quay lưng':   3,
     'gán mác':      3, 'khoe khoang': 3, 'xin bỏ':      3, 'bỏ họ':       3,
     'biệt phủ':     3, 'biệt thự':    3, 'từng phải':   3, 'lọt top':     3,
-    'mang thai':    3, 'dấu hiệu':    3, 'bầu':         3,
+    'mang thai':    3, 'dấu hiệu':    3, 'bầu':         3, 'phản cảm':    3,
+    'rà soát':      3,  'đổi đời':    3, 'cái tát':     3,
 
     // Tier 3 — signal yếu (1đ)
     'công khai':    1, 'lộ diện':     1, 'soi':         1, 'cam thường':  1,
     'gây sốt':      1, 'trending':    1, 'phản ứng':    1, 'lên tiếng':   1,
     'tố':           1, 'unfollow':    1, 'úp mở':       1, 'ẩn ý':        1,
-    'động thái':    1, 'căng thẳng':  1, 'cuộc chiến':  1,
+    'động thái':    1, 'căng thẳng':  1, 'cuộc chiến':  1, 'lấn lướt':    1,
+    'chào thua':    1, 
     };
 
 class TrendingService {
